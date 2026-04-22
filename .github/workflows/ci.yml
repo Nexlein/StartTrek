@@ -10,6 +10,7 @@ on:
 jobs:
   # --- PYTHON CHECKS ---
   python-ci:
+    if: github.repository == 'Nexlein/StartTrek'
     runs-on: ubuntu-latest
 
     strategy:
@@ -55,8 +56,6 @@ jobs:
     runs-on: ubuntu-latest
 
     needs: python-ci
-
-    if: github.repository == 'Nexlein/StartTrek' && github.event_name == 'push'
 
     steps:
       - name: Checkout Repository
