@@ -72,5 +72,5 @@ jobs:
       - name: Push to Epitech Mirror
         run: |
           ssh-keyscan github.com >> ~/.ssh/known_hosts
-          git remote add epitechStartTrek git@github.com:Nexlein/StartTrek.git
+          git remote add epitechStartTrek git@github.com:EpitechPGE2-2025/G-AIA-401-MPL-4-1-starttrek-1.git
           git push epitechStartTrek --mirror
