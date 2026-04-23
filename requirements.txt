@@ -1,1 +1,3 @@
 # Depedencies for the project
+gymnasium[box2d, other]
+stable-baselines3
