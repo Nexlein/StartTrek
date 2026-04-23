@@ -51,6 +51,9 @@ jobs:
 
   # --- MIRROR TO EPITECH ---
   mirror_to_epitech:
+    if: github.repository == 'Nexlein/StartTrek'
+      && github.event_name == 'push'
+      && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
     needs: python-ci
@@ -70,4 +73,4 @@ jobs:
         run: |
           ssh-keyscan github.com >> ~/.ssh/known_hosts
           git remote add epitechStartTrek git@github.com:EpitechPGE2-2025/G-AIA-401-MPL-4-1-starttrek-1.git
-          git push epitechStartTrek --mirror
+          git push epitechStartTrek HEAD:main
