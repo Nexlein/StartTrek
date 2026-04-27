@@ -1,0 +1,39 @@
+# DQN Learning parameters
+# learning_rate: The step size at each iteration while moving toward a minimum of a loss function.
+learning_rate: 0.0001
+policy_kwargs:
+  net_arch:
+    - 256
+    - 256
+
+# Replay buffer parameters
+# buffer_size: Maximum size of the replay buffer (number of transitions stored).
+buffer_size: 100000
+# learning_starts: Number of steps before the first learning process begins.
+learning_starts: 10000
+# batch_size: Number of transitions sampled from the replay buffer per gradient update.
+batch_size: 128
+
+# Train Frequency parameters
+# train_freq: Number of environment steps between each model update.
+train_freq: 4
+# gradient_steps: Number of gradient steps to perform after each train_freq.
+gradient_steps: 1
+# target_update_interval: Number of environment steps between each update of the target network.
+target_update_interval: 10000
+
+# Epsilon-greedy parameters for exploration vs exploitation
+# exploration_initial_eps: Initial probability of taking a random action.
+exploration_initial_eps: 1.0
+# exploration_final_eps: Final probability of taking a random action.
+exploration_final_eps: 0.02
+# exploration_fraction: Fraction of the total training period over which the exploration rate is reduced.
+exploration_fraction: 0.2
+
+# Other parameters
+# gamma: Discount factor for future rewards.
+gamma: 0.99
+# seed: Seed for the pseudo-random number generator.
+seed: 42
+# verbose: Verbosity level (0: no output, 1: info, 2: debug).
+verbose: 1
