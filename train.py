@@ -36,7 +36,7 @@ def main():
     print("Training...")
     model.learn(total_timesteps=TOTAL_STEPS, reset_num_timesteps=False)
 
-    print(f"Saving model...")
+    print("Saving model...")
     model.save(model_path)
 
     env.close()
