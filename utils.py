@@ -1,4 +1,12 @@
-from typing import List
+##
+## EPITECH PROJECT, 2026
+## StartTrek
+## File description:
+## utils
+##
+
+from typing import List, Dict, Any
+import yaml
 
 MODEL_FOLDER = "results/models/"
 DEFAULT_NAME = "dqn-model"
@@ -20,3 +28,8 @@ def get_model_path(argv: List[str]) -> str:
         return argv[1]
 
     return MODEL_FOLDER + DEFAULT_NAME + MODEL_EXT
+
+
+def load_hyperparameters(config_path: str = "configs/example.yaml") -> Dict[str, Any]:
+    with open(config_path, "r", encoding="utf-8") as f:
+        return yaml.safe_load(f)
