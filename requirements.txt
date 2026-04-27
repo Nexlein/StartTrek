@@ -1,3 +1,2 @@
-# Depedencies for the project
-gymnasium[box2d, other]
-stable-baselines3
+gymnasium[box2d,other]==1.3.0
+stable-baselines3==2.3.2
