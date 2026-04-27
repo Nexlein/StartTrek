@@ -4,11 +4,11 @@ import gymnasium as gym
 from stable_baselines3 import DQN
 from utils import MODEL_FOLDER, get_model_path
 
-ENV_ID          = "LunarLander-v3"
-SEED            = 42
+ENV_ID = "LunarLander-v3"
+SEED = 42
 
-POLICY          = "MlpPolicy"
-TOTAL_STEPS     = 200_000
+POLICY = "MlpPolicy"
+TOTAL_STEPS = 200_000
 
 
 def make_env():

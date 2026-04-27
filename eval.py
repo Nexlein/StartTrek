@@ -4,11 +4,11 @@ import gymnasium as gym
 from stable_baselines3 import DQN
 from utils import get_name_from_path, get_model_path
 
-ENV_ID          = "LunarLander-v3"
-SEED            = 42
-N_EPISODE       = 10
+ENV_ID = "LunarLander-v3"
+SEED = 42
+N_EPISODE = 10
 
-VIDEO_FOLDER    = "results/videos/"
+VIDEO_FOLDER = "results/videos/"
 
 
 def make_env(model_name: str):
@@ -18,7 +18,7 @@ def make_env(model_name: str):
         env=env,
         video_folder=VIDEO_FOLDER + model_name,
         name_prefix="eval",
-        episode_trigger=lambda episode_id: True
+        episode_trigger=lambda episode_id: True,
     )
 
     return env
