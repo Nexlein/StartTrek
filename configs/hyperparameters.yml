@@ -1,6 +1,7 @@
 # DQN Learning parameters
 # learning_rate: The step size at each iteration while moving toward a minimum of a loss function.
 learning_rate: 0.0001
+# policy_kwargs: Architecture of the neural network used by the DQN policy.
 policy_kwargs:
   net_arch:
     - 256
