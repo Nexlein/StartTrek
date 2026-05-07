@@ -4,7 +4,7 @@
 
 ### 1. Create a virtual environment
 
-Python 3.12 is recommended.
+Python 3.14 is recommended.
 
 ```bash
 python3 -m venv .venv
