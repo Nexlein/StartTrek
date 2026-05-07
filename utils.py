@@ -55,6 +55,6 @@ def load_hyperparameters() -> Dict[str, Any]:
     Returns:
         Dict[str, Any]: A dictionary containing the parsed hyperparameters.
     """
-    hyperparameters_path = "config/hyperparameters.yml"
+    hyperparameters_path = "configs/hyperparameters.yml"
     with open(hyperparameters_path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
