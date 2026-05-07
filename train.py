@@ -6,95 +6,114 @@
 ##
 
 import os
-from pathlib import Path
-import sys
 import gymnasium as gym
-from stable_baselines3 import DQN
-from stable_baselines3.common.callbacks import (
-    CheckpointCallback,
-    EvalCallback,
-)
-from stable_baselines3.common.env_util import make_vec_env
-from stable_baselines3.common.monitor import Monitor
-from utils import MODEL_FOLDER, get_model_path, load_hyperparameters
-from logger import EpisodeCsvLoggerCallback
+import torch
+import argparse
+import random
+import numpy as np
+
+from model.agent import DQNAgent
+from utils import MODEL_FOLDER, load_hyperparameters
 
 ENV_ID = "LunarLander-v3"
-SEED = 42
-
-POLICY = "MlpPolicy"
-TOTAL_STEPS = 1_000_000
-EVAL_FREQ = 10_000
-CHECKPOINT_FREQ = 50_000
-N_EVAL_EPISODES = 5
-BEST_MODEL_NAME = "best_model.zip"
-TRAIN_LOG_FILE = "trainLogs.csv"
-
-MODEL_SAVE_PATH = Path(MODEL_FOLDER)
-BEST_MODEL_PATH = MODEL_SAVE_PATH / BEST_MODEL_NAME
-
-DQN_KWARGS = load_hyperparameters()
 
 
-def make_env():
-    env = gym.make(id=ENV_ID)
-    env = Monitor(env)
-    return env
+def seed_everything(seed: int):
+    """
+    Set all random seeds for reproducibility.
+
+    Args:
+        seed (int): The seed value to use for random number generators
+                    (random, numpy, and torch).
+    """
+    random.seed(seed)
+    os.environ["PYTHONHASHSEED"] = str(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
 
 
-def main():
-    argv = sys.argv
-    if len(argv) > 2:
-        print("USAGE: python3 ./train.py [modelPath | None]")
-        return 84
+def train(seed_value: int):
+    """
+    Train the DQNAgent on the LunarLander environment.
 
-    env = make_vec_env(make_env, n_envs=1, seed=SEED)
-    eval_env = make_vec_env(make_env, n_envs=1, seed=SEED + 1)
+    Loads hyperparameters, initializes the environment and agent, and runs
+    the training loop over multiple episodes. It handles epsilon decay,
+    memory updates, model training steps, and saves the model checkpoints.
 
-    os.makedirs(MODEL_FOLDER, exist_ok=True)
+    Args:
+        seed_value (int): The random seed to ensure reproducible training runs.
+    """
+    seed_everything(seed_value)
 
-    model_path = get_model_path(argv)
-    if os.path.exists(model_path):
-        print(f"Model find at {model_path} -> loading...")
-        model = DQN.load(model_path, env=env)
-    else:
-        print(f"Model not find at {model_path} -> creation...")
-        model = DQN(policy=POLICY, env=env, **DQN_KWARGS)
+    config = load_hyperparameters()
+    env = gym.make(ENV_ID, render_mode="rgb_array")
+    agent = DQNAgent(state_dim=8, action_dim=4)
+    agent.optimizer.param_groups[0]["lr"] = config["learning_rate"]
+    agent.gamma = config["gamma"]
+    agent.memory.set_capacity(config["buffer_size"])
 
-    eval_callback = EvalCallback(
-        eval_env=eval_env,
-        best_model_save_path=MODEL_FOLDER,
-        log_path=MODEL_FOLDER,
-        eval_freq=EVAL_FREQ,
-        n_eval_episodes=N_EVAL_EPISODES,
-        deterministic=True,
-        render=False,
-    )
-    checkpoint_callback = CheckpointCallback(
-        save_freq=CHECKPOINT_FREQ,
-        save_path=MODEL_FOLDER,
-        name_prefix="checkpoint",
-    )
-    episode_log_callback = EpisodeCsvLoggerCallback(TRAIN_LOG_FILE)
+    agent.epsilon = config["exploration_initial_eps"]
+    agent.epsilon_min = config["exploration_final_eps"]
+    epsilon_decay = 0.995
 
-    print("Training...")
-    model.learn(
-        total_timesteps=TOTAL_STEPS,
-        reset_num_timesteps=False,
-        callback=[eval_callback, checkpoint_callback, episode_log_callback],
-    )
-    print(f"Training finished at {TOTAL_STEPS} timesteps")
+    print(f"Starting training on {ENV_ID} with seed {seed_value}")
 
-    print("Saving model...")
-    model.save(model_path)
+    log_file = f"train_results_seed_{seed_value}.csv"
+    if not os.path.exists(log_file):
+        with open(log_file, "w") as f:
+            f.write("Episode,Reward,Length,Epsilon\n")
 
-    if BEST_MODEL_PATH.exists():
-        Path(model_path).write_bytes(BEST_MODEL_PATH.read_bytes())
+    for episode in range(1000):
+        state, _ = env.reset(seed=seed_value + episode)
+        episode_reward = 0.0
+        done = False
+        step = 0
+
+        while not done:
+            action = agent.select_action(state)
+
+            next_state, reward, terminated, truncated, _ = env.step(action)
+            done = terminated or truncated
+
+            agent.memory.push(state, action, reward, next_state, terminated)
+
+            if len(agent.memory) > config["batch_size"]:
+                agent.learn(config["batch_size"])
+                agent.update_target_network()
+
+            state = next_state
+            episode_reward += float(reward)
+            step += 1
+
+        if agent.epsilon > agent.epsilon_min:
+            agent.epsilon *= epsilon_decay
+
+        print(
+            f"Episode {episode}: Score = {episode_reward:.2f}, Steps = {step}, Epsilon = {agent.epsilon:.2f}"
+        )
+        with open(log_file, "a") as f:
+            f.write(f"{episode},{episode_reward},{step},{agent.epsilon}\n")
+
+        if episode > 0 and episode % 50 == 0:
+            os.makedirs(MODEL_FOLDER, exist_ok=True)
+            torch.save(
+                agent.policy_net.state_dict(),
+                f"{MODEL_FOLDER}/model_seed_{seed_value}_ep_{episode}.pth",
+            )
 
     env.close()
-    eval_env.close()
-    return 0
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--seed", type=int, default=1, help="Seed value for reproducibility"
+    )
+    args = parser.parse_args()
+
+    train(seed_value=args.seed)
