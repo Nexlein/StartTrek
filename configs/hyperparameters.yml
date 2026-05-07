@@ -35,6 +35,6 @@ exploration_fraction: 0.2
 # gamma: Discount factor for future rewards.
 gamma: 0.99
 # seed: Seed for the pseudo-random number generator.
-seed: 42
+seed: 1
 # verbose: Verbosity level (0: no output, 1: info, 2: debug).
 verbose: 1
