@@ -59,7 +59,8 @@ def train(seed_value: int):
     agent = DQNAgent(state_dim=8, action_dim=4)
     agent.optimizer.param_groups[0]["lr"] = config["learning_rate"]
     agent.gamma = config["gamma"]
-    agent.memory.set_capacity(config["buffer_size"])
+    buffer_size = config.get("buffer_size", agent.memory.memory.maxlen)
+    agent.memory.set_capacity(buffer_size)
 
     agent.epsilon = config["exploration_initial_eps"]
     agent.epsilon_min = config["exploration_final_eps"]
