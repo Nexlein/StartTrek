@@ -1,0 +1,14 @@
+# configs/settings.yml
+
+environment:
+  env_id: "LunarLander-v3"
+
+training:
+  max_episodes: 1000
+
+evaluation:
+  n_episodes: 10
+
+paths:
+  video_folder: "results/videos/"
+  model_folder: "results/models/"
