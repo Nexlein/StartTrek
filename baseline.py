@@ -7,12 +7,10 @@
 
 import os
 import gymnasium as gym
-
-ENV_ID = "LunarLander-v3"
-VIDEO_FOLDER = "results/videos/"
+from utils import load_settings
 
 
-def make_video_env(name: str):
+def make_video_env(name: str, env_id: str, video_folder: str):
     """
     Create a Gymnasium environment with video recording enabled.
 
@@ -22,10 +20,10 @@ def make_video_env(name: str):
     Returns:
         gym.Env: The wrapped Gymnasium environment capable of recording videos.
     """
-    env = gym.make(ENV_ID, render_mode="rgb_array")
+    env = gym.make(env_id, render_mode="rgb_array")
     env = gym.wrappers.RecordVideo(
         env=env,
-        video_folder=os.path.join(VIDEO_FOLDER, name),
+        video_folder=os.path.join(video_folder, name),
         name_prefix=name,
         episode_trigger=lambda x: True,
     )
@@ -39,9 +37,13 @@ def random_policy():
     This policy executes 3 episodes in the environment, sampling actions
     uniformly from the action space, and saves the recordings.
     """
+    settings = load_settings()
     print("--- Running Random Policy Baseline ---")
-    env = make_video_env("baseline_random")
-
+    env = make_video_env(
+        "baseline_random",
+        settings["environment"]["env_id"],
+        settings["paths"]["video_folder"],
+    )
     for ep in range(3):
         env.reset(seed=1 + ep)
         done = False
@@ -60,9 +62,13 @@ def heuristic_policy():
     if the angle is too steep, or the main engine if it is falling too fast.
     Executes 3 episodes and saves the recordings.
     """
+    settings = load_settings()
     print("--- Running Heuristic Policy Baseline ---")
-    env = make_video_env("baseline_heuristic")
-
+    env = make_video_env(
+        "baseline_heuristic",
+        settings["environment"]["env_id"],
+        settings["paths"]["video_folder"],
+    )
     for ep in range(3):
         obs, _ = env.reset(seed=1 + ep)
         done = False

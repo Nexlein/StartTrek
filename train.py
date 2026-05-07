@@ -13,9 +13,7 @@ import random
 import numpy as np
 
 from model.agent import DQNAgent
-from utils import MODEL_FOLDER, load_hyperparameters
-
-ENV_ID = "LunarLander-v3"
+from utils import load_hyperparameters, load_settings
 
 
 def seed_everything(seed: int):
@@ -51,7 +49,13 @@ def train(seed_value: int):
     seed_everything(seed_value)
 
     config = load_hyperparameters()
-    env = gym.make(ENV_ID, render_mode="rgb_array")
+    settings = load_settings()
+
+    env_id = settings["environment"]["env_id"]
+    model_folder = settings["paths"]["model_folder"]
+    max_episodes = settings["training"]["max_episodes"]
+
+    env = gym.make(env_id, render_mode="rgb_array")
     agent = DQNAgent(state_dim=8, action_dim=4)
     agent.optimizer.param_groups[0]["lr"] = config["learning_rate"]
     agent.gamma = config["gamma"]
@@ -61,14 +65,14 @@ def train(seed_value: int):
     agent.epsilon_min = config["exploration_final_eps"]
     epsilon_decay = 0.995
 
-    print(f"Starting training on {ENV_ID} with seed {seed_value}")
+    print(f"Starting training on {env_id} with seed {seed_value}")
 
     log_file = f"train_results_seed_{seed_value}.csv"
     if not os.path.exists(log_file):
         with open(log_file, "w") as f:
             f.write("Episode,Reward,Length,Epsilon\n")
 
-    for episode in range(1000):
+    for episode in range(max_episodes):
         state, _ = env.reset(seed=seed_value + episode)
         episode_reward = 0.0
         done = False
@@ -100,10 +104,10 @@ def train(seed_value: int):
             f.write(f"{episode},{episode_reward},{step},{agent.epsilon}\n")
 
         if episode > 0 and episode % 50 == 0:
-            os.makedirs(MODEL_FOLDER, exist_ok=True)
+            os.makedirs(model_folder, exist_ok=True)
             torch.save(
                 agent.policy_net.state_dict(),
-                f"{MODEL_FOLDER}/model_seed_{seed_value}_ep_{episode}.pth",
+                f"{model_folder}/model_seed_{seed_value}_ep_{episode}.pth",
             )
 
     env.close()
