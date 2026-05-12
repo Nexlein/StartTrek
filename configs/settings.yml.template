@@ -1,0 +1,24 @@
+# configs/settings.yml.template
+
+environment:
+  # The Gymnasium/Environment ID to use
+  env_id: "LunarLander-v3"
+  # Enable wind dynamics to test agent robustness
+  enable_wind: false
+  # Strength of the wind (only applied if enable_wind is true)
+  wind_power: 15.0
+  # Global seed for environment and random number generators
+  seed: 1
+
+training:
+  # Maximum number of episodes for the training loop
+  max_episodes: 1000
+
+evaluation:
+  # Number of episodes to run during the evaluation phase
+  n_episodes: 10
+
+paths:
+  # Directories for outputs (must include trailing slash)
+  video_folder: "results/videos/"
+  model_folder: "results/models/"
