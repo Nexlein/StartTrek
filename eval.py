@@ -9,6 +9,7 @@ import os
 import argparse
 import gymnasium as gym
 import torch
+import sys
 from model.agent import DQNAgent
 from utils import get_name_from_path, get_model_path, load_settings
 
@@ -48,57 +49,43 @@ def make_env(
     return env
 
 
-def main():
+def eval_model(cli_model_path=None, cli_seed=None, cli_wind=None):
     """
-    Main function to evaluate a trained DQN model.
+    Evaluate a trained DQN model.
 
-    Parses command-line arguments to find the model path, loads the trained
-    weights into a DQNAgent, and runs evaluation episodes while recording video.
+    Loads the trained weights into a DQNAgent, and runs evaluation episodes while recording video.
+
+    Args:
+        cli_model_path (str, optional): Path to the trained model (.pth).
+        cli_seed (int, optional): Overrides the seed from settings.yml if provided. Defaults to None.
+        cli_wind (float, optional): Overrides the wind configuration.
+                                    None uses config, -1.0 uses config power but forces True,
+                                    any other >= 0 float uses that as wind power. Defaults to None.
 
     Returns:
         int: Exit status code (0 for success, 84 for error).
     """
-    parser = argparse.ArgumentParser(description="Evaluate a trained DQN model.")
-    parser.add_argument(
-        "model_path", nargs="?", default=None, help="Path to the trained model (.pth)"
-    )
-    parser.add_argument(
-        "--seed",
-        type=int,
-        default=None,
-        help="Seed value for reproducibility (overrides settings.yml)",
-    )
-    parser.add_argument(
-        "--wind",
-        nargs="?",
-        type=float,
-        const=-1.0,
-        default=None,
-        help="Enable wind in the environment. Optionally provide wind power (e.g., --wind 15.0)",
-    )
-    args = parser.parse_args()
-
     settings = load_settings()
     env_id = settings["environment"]["env_id"]
 
-    if args.wind is None:
+    if cli_wind is None:
         enable_wind = settings["environment"].get("enable_wind", False)
         wind_power = settings["environment"].get("wind_power", 15.0)
-    elif args.wind == -1.0:
+    elif cli_wind == -1.0:
         enable_wind = True
         wind_power = settings["environment"].get("wind_power", 15.0)
     else:
         enable_wind = True
-        wind_power = args.wind
+        wind_power = cli_wind
 
     seed_value = (
-        args.seed if args.seed is not None else settings["environment"].get("seed", 1)
+        cli_seed if cli_seed is not None else settings["environment"].get("seed", 1)
     )
 
     video_folder = settings["paths"]["video_folder"]
     n_episodes = settings["evaluation"]["n_episodes"]
 
-    model_path = get_model_path(args.model_path)
+    model_path = get_model_path(cli_model_path)
     model_name = get_name_from_path(model_path)
     env = make_env(model_name, env_id, video_folder, enable_wind, wind_power)
 
@@ -132,4 +119,28 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Evaluate a trained DQN model.")
+    parser.add_argument(
+        "model_path", nargs="?", default=None, help="Path to the trained model (.pth)"
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Seed value for reproducibility (overrides settings.yml)",
+    )
+    parser.add_argument(
+        "--wind",
+        nargs="?",
+        type=float,
+        const=-1.0,
+        default=None,
+        help="Enable wind in the environment. Optionally provide wind power (e.g., --wind 15.0)",
+    )
+    args = parser.parse_args()
+
+    sys.exit(
+        eval_model(
+            cli_model_path=args.model_path, cli_seed=args.seed, cli_wind=args.wind
+        )
+    )
