@@ -63,6 +63,8 @@ def eval_model(artifact: Artifacts, cli_seed=None, cli_wind=None):
             base_folder=artifact.videos_folder,
             mode="eval",
             model_name=model_name,
+            enable_wind=enable_wind,
+            wind_power=wind_power
         )
 
         print(f"Model found : {artifact.final_model_name}")

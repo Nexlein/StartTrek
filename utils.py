@@ -23,7 +23,15 @@ def load_settings(config_path: str = "configs/settings.yml") -> Dict[str, Any]:
     with open(config_path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
 
-def make_video_env(env_id: str, base_folder: str, mode: str, model_name: str = None, seed: int | None = None):
+def make_video_env(
+        env_id: str,
+        base_folder: str,
+        mode: str,
+        model_name: str = None,
+        seed: int | None = None,
+        enable_wind: bool = False,
+        wind_power: float = 15.0
+    ):
     path_parts = [base_folder, mode]
     if model_name:
         path_parts.append(model_name)
@@ -32,7 +40,13 @@ def make_video_env(env_id: str, base_folder: str, mode: str, model_name: str = N
 
     video_path = os.path.join(*path_parts)
 
-    env = gym.make(env_id, render_mode="rgb_array")
+    env = gym.make(
+        env_id,
+        render_mode="rgb_array",
+        enable_wind=enable_wind,
+        wind_power=wind_power
+    )
+
     env = gym.wrappers.RecordVideo(
         env=env,
         video_folder=video_path,
