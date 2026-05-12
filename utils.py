@@ -5,18 +5,10 @@
 ## utils
 ##
 
-from typing import Dict, Any, Optional
+import os
 import yaml
-
-
-def get_name_from_path(path: str) -> str:
-    """Extract the model name from a given file path by removing the extension."""
-    filename = path.split("/")[-1]
-    parts = filename.split(".")
-    if len(parts) == 1:
-        return parts[0]
-    return "".join(parts[:-1])
-
+import gymnasium as gym
+from typing import Dict, Any
 
 def load_hyperparameters(
     config_path: str = "configs/hyperparameters.yml",
@@ -31,15 +23,20 @@ def load_settings(config_path: str = "configs/settings.yml") -> Dict[str, Any]:
     with open(config_path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
 
+def make_video_env(env_id: str, base_folder: str, mode: str, model_name: str = None, seed: int | None = None):
+    path_parts = [base_folder, mode]
+    if model_name:
+        path_parts.append(model_name)
+    if seed is not None:
+        path_parts.append(f"seed_{seed}")
 
-def get_model_path(cli_model_path: Optional[str] = None) -> str:
-    """Determine the model path based on command-line arguments and settings."""
-    settings = load_settings()
-    model_folder = settings["paths"]["model_folder"]
-    model_ext = ".pth"
-    default_name = "dqn-model"
+    video_path = os.path.join(*path_parts)
 
-    if cli_model_path and cli_model_path.endswith(model_ext):
-        return cli_model_path
-
-    return model_folder + default_name + model_ext
+    env = gym.make(env_id, render_mode="rgb_array")
+    env = gym.wrappers.RecordVideo(
+        env=env,
+        video_folder=video_path,
+        name_prefix=f"{mode}{"_" if mode and model_name else ""}{model_name if model_name else ''}",
+        episode_trigger=lambda x: True,
+    )
+    return env

@@ -6,13 +6,13 @@
 ##
 
 import os
+import sys
+import torch
 import argparse
 import gymnasium as gym
-import torch
-import sys
+from artifacts import Artifacts
+from utils import load_settings
 from model.agent import DQNAgent
-from utils import get_name_from_path, get_model_path, load_settings
-
 
 def make_env(
     model_name: str,
@@ -49,14 +49,14 @@ def make_env(
     return env
 
 
-def eval_model(cli_model_path=None, cli_seed=None, cli_wind=None):
+def eval_model(artifact: Artifacts, cli_seed=None, cli_wind=None):
     """
     Evaluate a trained DQN model.
 
     Loads the trained weights into a DQNAgent, and runs evaluation episodes while recording video.
 
     Args:
-        cli_model_path (str, optional): Path to the trained model (.pth).
+        artifact (Artifacts): The artifact manager containing model paths.
         cli_seed (int, optional): Overrides the seed from settings.yml if provided. Defaults to None.
         cli_wind (float, optional): Overrides the wind configuration.
                                     None uses config, -1.0 uses config power but forces True,
@@ -65,8 +65,14 @@ def eval_model(cli_model_path=None, cli_seed=None, cli_wind=None):
     Returns:
         int: Exit status code (0 for success, 84 for error).
     """
+    model_path = artifact.final_model_path
+    if model_path is None or not os.path.exists(model_path):
+        print("No final model found in artifact -> exit...", file=sys.stderr)
+        return 84
+
     settings = load_settings()
     env_id = settings["environment"]["env_id"]
+    n_episodes = settings["evaluation"]["n_episodes"]
 
     if cli_wind is None:
         enable_wind = settings["environment"].get("enable_wind", False)
@@ -82,37 +88,38 @@ def eval_model(cli_model_path=None, cli_seed=None, cli_wind=None):
         cli_seed if cli_seed is not None else settings["environment"].get("seed", 1)
     )
 
-    video_folder = settings["paths"]["video_folder"]
-    n_episodes = settings["evaluation"]["n_episodes"]
+    env = make_env(
+        artifact.final_model_name,
+        env_id,
+        artifact.videos_folder,
+        enable_wind,
+        wind_power
+    )
 
-    model_path = get_model_path(cli_model_path)
-    model_name = get_name_from_path(model_path)
-    env = make_env(model_name, env_id, video_folder, enable_wind, wind_power)
+    print(f"Model found : {artifact.final_model_name}")
+    print(f"Loading from: {model_path}")
 
-    os.makedirs(video_folder, exist_ok=True)
+    agent = DQNAgent(state_dim=8, action_dim=4)
+    agent.policy_net.load_state_dict(torch.load(model_path))
+    agent.policy_net.eval()
+    agent.epsilon = 0.0
 
-    if os.path.exists(model_path):
-        print(f"Model found at {model_path} -> loading...")
-        agent = DQNAgent(state_dim=8, action_dim=4)
-        agent.policy_net.load_state_dict(torch.load(model_path))
-        agent.policy_net.eval()
-        agent.epsilon = 0.0
-    else:
-        print(f"Model not found at {model_path} -> exit...")
-        return 84
-
-    print("Evaluating...")
+    print(f"Evaluating for {n_episodes} episodes (Seed: {seed_value}, Wind: {enable_wind})...")
     for ep in range(n_episodes):
         obs, _ = env.reset(seed=seed_value + ep)
         done = False
+        episode_reward = 0.0
 
         print(f"Episode {ep + 1} / {n_episodes}")
         while not done:
             action = agent.select_action(obs)
-            obs, _, terminated, truncated, _ = env.step(action)
+            obs, reward, terminated, truncated, _ = env.step(action)
+            episode_reward += reward
 
             if terminated or truncated:
                 done = True
+
+        print(f"Finished Episode {ep + 1} with Reward: {episode_reward:.2f}")
 
     env.close()
     return 0
@@ -121,7 +128,10 @@ def eval_model(cli_model_path=None, cli_seed=None, cli_wind=None):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evaluate a trained DQN model.")
     parser.add_argument(
-        "model_path", nargs="?", default=None, help="Path to the trained model (.pth)"
+        "--artifact",
+        type=str,
+        required=True,
+        help="Path to the artifact folder containing the model",
     )
     parser.add_argument(
         "--seed",
@@ -139,8 +149,12 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    artifact_obj = Artifacts(load_path=args.artifact)
+
     sys.exit(
         eval_model(
-            cli_model_path=args.model_path, cli_seed=args.seed, cli_wind=args.wind
+            artifact=artifact_obj,
+            cli_seed=args.seed,
+            cli_wind=args.wind
         )
     )
