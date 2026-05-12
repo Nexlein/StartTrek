@@ -35,7 +35,7 @@ def seed_everything(seed: int):
         torch.backends.cudnn.benchmark = False
 
 
-def train(seed_value: int):
+def train(cli_seed=None, cli_wind=None):
     """
     Train the DQNAgent on the LunarLander environment.
 
@@ -44,18 +44,38 @@ def train(seed_value: int):
     memory updates, model training steps, and saves the model checkpoints.
 
     Args:
-        seed_value (int): The random seed to ensure reproducible training runs.
+        cli_seed (int, optional): Overrides the seed from settings.yml if provided. Defaults to None.
+        cli_wind (float, optional): Overrides the wind configuration.
+                                    None uses config, -1.0 uses config power but forces True,
+                                    any other >= 0 float uses that as wind power. Defaults to None.
     """
+    settings = load_settings()
+
+    seed_value = (
+        cli_seed if cli_seed is not None else settings["environment"].get("seed", 1)
+    )
     seed_everything(seed_value)
 
     config = load_hyperparameters()
-    settings = load_settings()
 
     env_id = settings["environment"]["env_id"]
+
+    if cli_wind is None:
+        enable_wind = settings["environment"].get("enable_wind", False)
+        wind_power = settings["environment"].get("wind_power", 15.0)
+    elif cli_wind == -1.0:
+        enable_wind = True
+        wind_power = settings["environment"].get("wind_power", 15.0)
+    else:
+        enable_wind = True
+        wind_power = cli_wind
+
     model_folder = settings["paths"]["model_folder"]
     max_episodes = settings["training"]["max_episodes"]
 
-    env = gym.make(env_id, render_mode="rgb_array")
+    env = gym.make(
+        env_id, render_mode="rgb_array", enable_wind=enable_wind, wind_power=wind_power
+    )
     agent = DQNAgent(state_dim=8, action_dim=4)
     agent.optimizer.param_groups[0]["lr"] = config["learning_rate"]
     agent.gamma = config["gamma"]
@@ -117,8 +137,19 @@ def train(seed_value: int):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--seed", type=int, default=1, help="Seed value for reproducibility"
+        "--seed",
+        type=int,
+        default=None,
+        help="Seed value for reproducibility (overrides settings.yml)",
+    )
+    parser.add_argument(
+        "--wind",
+        nargs="?",
+        type=float,
+        const=-1.0,
+        default=None,
+        help="Enable wind in the environment. Optionally provide wind power (e.g., --wind 15.0)",
     )
     args = parser.parse_args()
 
-    train(seed_value=args.seed)
+    train(cli_seed=args.seed, cli_wind=args.wind)
