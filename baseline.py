@@ -7,8 +7,8 @@
 
 import os
 import gymnasium as gym
+from artifacts import Artifacts
 from utils import load_settings
-
 
 def make_video_env(name: str, env_id: str, video_folder: str):
     """
@@ -30,7 +30,7 @@ def make_video_env(name: str, env_id: str, video_folder: str):
     return env
 
 
-def random_policy():
+def random_policy(artifact: Artifacts):
     """
     Run a baseline agent that selects actions completely at random.
 
@@ -42,7 +42,7 @@ def random_policy():
     env = make_video_env(
         "baseline_random",
         settings["environment"]["env_id"],
-        settings["paths"]["video_folder"],
+        artifact.videos_folder
     )
     for ep in range(3):
         env.reset(seed=1 + ep)
@@ -54,7 +54,7 @@ def random_policy():
     env.close()
 
 
-def heuristic_policy():
+def heuristic_policy(artifact: Artifacts):
     """
     Run a baseline agent that uses a hardcoded heuristic to select actions.
 
@@ -67,7 +67,7 @@ def heuristic_policy():
     env = make_video_env(
         "baseline_heuristic",
         settings["environment"]["env_id"],
-        settings["paths"]["video_folder"],
+        artifact.videos_folder
     )
     for ep in range(3):
         obs, _ = env.reset(seed=1 + ep)
@@ -93,5 +93,10 @@ def heuristic_policy():
 
 
 if __name__ == "__main__":
-    random_policy()
-    heuristic_policy()
+    artifact = Artifacts(
+        configs=["configs/settings.yml", "configs/hyperparameters.yml"]
+    )
+    random_policy(artifact)
+    heuristic_policy(artifact)
+
+    artifact.generate_report()

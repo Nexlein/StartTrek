@@ -7,13 +7,14 @@
 
 import os
 import sys
-import gymnasium as gym
 import torch
+import argparse
+import gymnasium as gym
+from artifacts import Artifacts
+from utils import load_settings
 from model.agent import DQNAgent
-from utils import get_name_from_path, get_model_path, load_settings
 
 SEED = 1
-
 
 def make_env(model_name: str, env_id: str, video_folder: str):
     """
@@ -35,7 +36,7 @@ def make_env(model_name: str, env_id: str, video_folder: str):
     return env
 
 
-def main():
+def evaluate(artifact: Artifacts):
     """
     Main function to evaluate a trained DQN model.
 
@@ -45,31 +46,23 @@ def main():
     Returns:
         int: Exit status code (0 for success, 84 for error).
     """
-    argv = sys.argv
-    if len(argv) > 2:
-        print("USAGE:\n\tpython3 ./eval.py [modelPath | None]")
+    model_path = artifact.final_model_path
+    if model_path is None:
+        print("No final model found in artifact -> exit...", file=sys.stderr)
         return 84
 
     settings = load_settings()
     env_id = settings["environment"]["env_id"]
-    video_folder = settings["paths"]["video_folder"]
     n_episodes = settings["evaluation"]["n_episodes"]
 
-    model_path = get_model_path(argv)
-    model_name = get_name_from_path(model_path)
-    env = make_env(model_name, env_id, video_folder)
+    env = make_env(artifact.final_model_name, env_id, artifact.videos_folder)
 
-    os.makedirs(video_folder, exist_ok=True)
-
-    if os.path.exists(model_path):
-        print(f"Model found at {model_path} -> loading...")
-        agent = DQNAgent(state_dim=8, action_dim=4)
-        agent.policy_net.load_state_dict(torch.load(model_path))
-        agent.policy_net.eval()
-        agent.epsilon = 0.0
-    else:
-        print(f"Model not found at {model_path} -> exit...")
-        return 84
+    print(f"Model found : {artifact.final_model_name}")
+    print(f"Loading from: {model_path}")
+    agent = DQNAgent(state_dim=8, action_dim=4)
+    agent.policy_net.load_state_dict(torch.load(model_path))
+    agent.policy_net.eval()
+    agent.epsilon = 0.0
 
     print("Evaluating...")
     for ep in range(n_episodes):
@@ -89,4 +82,17 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--seed", type=int, default=1, help="Seed value for reproducibility"
+    )
+    parser.add_argument(
+        "--artifact", type=str, default=None, help="Path to an existing artifact folder"
+    )
+    args = parser.parse_args()
+
+    artifact = Artifacts(
+        load_path=args.artifact,
+    )
+
+    sys.exit(evaluate(artifact))

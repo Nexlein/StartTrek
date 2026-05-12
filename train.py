@@ -6,12 +6,13 @@
 ##
 
 import os
-import gymnasium as gym
 import torch
-import argparse
 import random
+import argparse
 import numpy as np
+import gymnasium as gym
 
+from artifacts import Artifacts
 from model.agent import DQNAgent
 from utils import load_hyperparameters, load_settings
 
@@ -35,7 +36,7 @@ def seed_everything(seed: int):
         torch.backends.cudnn.benchmark = False
 
 
-def train(seed_value: int):
+def train(seed_value: int, artifact: Artifacts):
     """
     Train the DQNAgent on the LunarLander environment.
 
@@ -52,10 +53,16 @@ def train(seed_value: int):
     settings = load_settings()
 
     env_id = settings["environment"]["env_id"]
-    model_folder = settings["paths"]["model_folder"]
     max_episodes = settings["training"]["max_episodes"]
 
     env = gym.make(env_id, render_mode="rgb_array")
+    env = gym.wrappers.RecordVideo(
+        env = env,
+        video_folder= f"{artifact.videos_folder}/train_seed_{seed_value}",
+        name_prefix="train",
+        episode_trigger=lambda x: True,
+    )
+
     agent = DQNAgent(state_dim=8, action_dim=4)
     agent.optimizer.param_groups[0]["lr"] = config["learning_rate"]
     agent.gamma = config["gamma"]
@@ -67,11 +74,7 @@ def train(seed_value: int):
     epsilon_decay = 0.995
 
     print(f"Starting training on {env_id} with seed {seed_value}")
-
-    log_file = f"train_results_seed_{seed_value}.csv"
-    if not os.path.exists(log_file):
-        with open(log_file, "w") as f:
-            f.write("Episode,Reward,Length,Epsilon\n")
+    print(f"artifact folder : {artifact.videos_folder}")
 
     for episode in range(max_episodes):
         state, _ = env.reset(seed=seed_value + episode)
@@ -101,24 +104,28 @@ def train(seed_value: int):
         print(
             f"Episode {episode}: Score = {episode_reward:.2f}, Steps = {step}, Epsilon = {agent.epsilon:.2f}"
         )
-        with open(log_file, "a") as f:
-            f.write(f"{episode},{episode_reward},{step},{agent.epsilon}\n")
+        artifact.log_step([episode, episode_reward, step, agent.epsilon])
 
-        if episode > 0 and episode % 50 == 0:
-            os.makedirs(model_folder, exist_ok=True)
-            torch.save(
-                agent.policy_net.state_dict(),
-                f"{model_folder}/model_seed_{seed_value}_ep_{episode}.pth",
-            )
+        if episode > 0:
+            if episode + 1 == max_episodes:
+                artifact.save_final_model(agent.policy_net.state_dict(), seed_value, episode)
+            elif episode % 50 == 0:
+                artifact.save_checkpoint_model(agent.policy_net.state_dict(), seed_value, episode)
 
     env.close()
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--seed", type=int, default=1, help="Seed value for reproducibility"
     )
+    parser.add_argument(
+        "--artifact", type=str, default=None, help="Path to an existing artifact folder"
+    )
     args = parser.parse_args()
 
-    train(seed_value=args.seed)
+    artifact = Artifacts(
+        load_path=args.artifact,
+    )
+
+    train(seed_value=args.seed, artifact=artifact)
