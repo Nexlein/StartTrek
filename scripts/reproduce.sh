@@ -25,14 +25,11 @@ for seed in $SEEDS
 do
     echo "Training in progress with SEED : $seed"
     python3 -W ignore train.py --seed $seed --artifact "$latest_artifact"
-done
-
-echo "[3/3] Starting evaluating on 5 seeds (0 to 4)..."
-for seed in $SEEDS
-do
-    echo "Evaluating in progress with SEED : $seed"
-    python3 -W ignore eval.py --seed $seed --artifact "$latest_artifact"
     echo ""
 done
 
+echo "[3/3] Starting evaluating..."
+python3 -W ignore eval.py --seed $seed --artifact "$latest_artifact"
+
+echo ""
 echo "Reproduction completed."

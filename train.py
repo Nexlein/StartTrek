@@ -95,7 +95,7 @@ def train(artifact: Artifacts, cli_seed=None, cli_wind=None):
     epsilon_decay = 0.995
 
     print(f"Starting training on {env_id} with seed {seed_value} (Wind: {enable_wind}, Power: {wind_power})")
-    print(f"Artifact folder : {artifact.videos_folder}")
+    print(f"Artifact videos folder : {artifact.videos_folder}")
 
     for episode in range(max_episodes):
         state, _ = env.reset(seed=seed_value + episode)
