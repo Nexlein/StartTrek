@@ -5,6 +5,9 @@ This folder contains the YAML configuration files used to centralize runtime opt
 ## **settings.yml**
 
 - **environment.env_id:** The Gymnasium/Environment ID to use. Default: `LunarLander-v3`.
+- **environment.enable_wind:** Whether to enable wind dynamics in the environment (e.g., for LunarLander). Default: `false`.
+- **environment.wind_power:** The strength of the wind if enabled. Default: `15.0`.
+- **environment.seed:** Seed for random number generators (numpy, torch, gym) for reproducibility. Default: `1`.
 - **training.max_episodes:** Maximum number of training episodes (integer).
 - **evaluation.n_episodes:** Number of evaluation episodes to run when testing a trained agent.
 - **paths.video_folder / paths.model_folder:** Output folders for recorded videos and saved models. Provide relative paths.

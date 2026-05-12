@@ -5,7 +5,7 @@
 ## utils
 ##
 
-from typing import List, Dict, Any
+from typing import Dict, Any, Optional
 import yaml
 
 
@@ -32,14 +32,14 @@ def load_settings(config_path: str = "configs/settings.yml") -> Dict[str, Any]:
         return yaml.safe_load(f)
 
 
-def get_model_path(argv: List[str]) -> str:
+def get_model_path(cli_model_path: Optional[str] = None) -> str:
     """Determine the model path based on command-line arguments and settings."""
     settings = load_settings()
     model_folder = settings["paths"]["model_folder"]
     model_ext = ".pth"
     default_name = "dqn-model"
 
-    if len(argv) == 2 and argv[1].endswith(model_ext):
-        return argv[1]
+    if cli_model_path and cli_model_path.endswith(model_ext):
+        return cli_model_path
 
     return model_folder + default_name + model_ext

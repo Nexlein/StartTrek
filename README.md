@@ -29,18 +29,35 @@ python baseline.py
 
 ### Training
 
-Train the DQN agent with a specific seed:
+Train the DQN agent. You can specify a random seed or enable wind disturbances (these CLI arguments override `configs/settings.yml`):
 
 ```bash
-python train.py --seed <SEED_VALUE>
+# Default training (uses settings from config)
+python train.py
+
+# Train with a specific seed
+python train.py --seed 42
+
+# Train with wind enabled (uses wind_power from config)
+python train.py --wind
+
+# Train with wind enabled and a custom wind power
+python train.py --wind 20.0
 ```
 
 ### Evaluation
 
-Evaluate a trained model and generate a landing video:
+Evaluate a trained model and generate a landing video. You can evaluate the default model or specify a path, and optionally override the seed and wind settings:
 
 ```bash
-python3 eval.py results/models/<MODEL_NAME>.pth
+# Evaluate the default model (results/models/dqn-model.pth)
+python eval.py
+
+# Evaluate a specific model
+python eval.py results/models/<MODEL_NAME>.pth
+
+# Evaluate with a specific seed and wind enabled
+python eval.py --seed 42 --wind
 ```
 
 ### Reproducibility
