@@ -1,0 +1,34 @@
+# DQN Learning parameters
+# Optimizer learning rate
+learning_rate: 0.0001
+policy_kwargs:
+  # Neural network hidden layer sizes
+  net_arch:
+    - 256
+    - 256
+
+# Replay buffer parameters
+# Maximum number of transitions the buffer can store
+buffer_size: 100000
+# Number of random steps before training begins
+learning_starts: 10000
+# Number of transitions sampled for each gradient update
+batch_size: 128
+
+# Train Frequency parameters
+# Update the model every X steps
+train_freq: 4
+# Number of gradient updates per train_freq
+gradient_steps: 1
+# Steps between copying weights to the target network
+target_update_interval: 10000
+
+# Epsilon-greedy parameters for exploration vs exploitation
+exploration_initial_eps: 1.0
+exploration_final_eps: 0.02
+# Fraction of total training over which epsilon decays
+exploration_fraction: 0.2
+
+# Other parameters
+# Discount factor for future rewards
+gamma: 0.99

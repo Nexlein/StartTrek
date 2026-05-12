@@ -2,6 +2,9 @@
 
 environment:
   env_id: "LunarLander-v3"
+  enable_wind: false
+  wind_power: 15.0
+  seed: 1
 
 training:
   max_episodes: 1000
