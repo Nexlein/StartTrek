@@ -5,32 +5,10 @@
 ## baseline
 ##
 
-import os
-import gymnasium as gym
 from artifacts import Artifacts
-from utils import load_settings
+from utils import load_settings, make_video_env
 
-def make_video_env(name: str, env_id: str, video_folder: str):
-    """
-    Create a Gymnasium environment with video recording enabled.
-
-    Args:
-        name (str): The name prefix for the recorded video files and folder.
-
-    Returns:
-        gym.Env: The wrapped Gymnasium environment capable of recording videos.
-    """
-    env = gym.make(env_id, render_mode="rgb_array")
-    env = gym.wrappers.RecordVideo(
-        env=env,
-        video_folder=os.path.join(video_folder, name),
-        name_prefix=name,
-        episode_trigger=lambda x: True,
-    )
-    return env
-
-
-def random_policy(artifact: Artifacts):
+def random_policy(artifact: Artifacts, seed: int = 0):
     """
     Run a baseline agent that selects actions completely at random.
 
@@ -39,11 +17,14 @@ def random_policy(artifact: Artifacts):
     """
     settings = load_settings()
     print("--- Running Random Policy Baseline ---")
+
     env = make_video_env(
-        "baseline_random",
-        settings["environment"]["env_id"],
-        artifact.videos_folder
+        env_id=settings["environment"]["env_id"],
+        base_folder=artifact.videos_folder,
+        mode="baseline",
+        model_name="random"
     )
+
     for ep in range(3):
         env.reset(seed=1 + ep)
         done = False
@@ -64,11 +45,14 @@ def heuristic_policy(artifact: Artifacts):
     """
     settings = load_settings()
     print("--- Running Heuristic Policy Baseline ---")
+
     env = make_video_env(
-        "baseline_heuristic",
-        settings["environment"]["env_id"],
-        artifact.videos_folder
+        env_id=settings["environment"]["env_id"],
+        base_folder=artifact.videos_folder,
+        mode="baseline",
+        model_name="heuristic"
     )
+
     for ep in range(3):
         obs, _ = env.reset(seed=1 + ep)
         done = False

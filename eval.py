@@ -9,34 +9,13 @@ import os
 import sys
 import torch
 import argparse
-import gymnasium as gym
 from artifacts import Artifacts
-from utils import load_settings
 from model.agent import DQNAgent
+from utils import load_settings, make_video_env
 
 SEED = 1
 
-def make_env(model_name: str, env_id: str, video_folder: str):
-    """
-    Create a Gymnasium environment with video recording for evaluation.
-
-    Args:
-        model_name (str): The name of the model being evaluated, used for the video folder.
-
-    Returns:
-        gym.Env: The wrapped Gymnasium environment for recording evaluation videos.
-    """
-    env = gym.make(id=env_id, render_mode="rgb_array")
-    env = gym.wrappers.RecordVideo(
-        env=env,
-        video_folder=os.path.join(video_folder, model_name),
-        name_prefix="eval",
-        episode_trigger=lambda episode_id: True,
-    )
-    return env
-
-
-def evaluate(artifact: Artifacts):
+def evaluate(seed_value: int, artifact: Artifacts):
     """
     Main function to evaluate a trained DQN model.
 
@@ -46,38 +25,47 @@ def evaluate(artifact: Artifacts):
     Returns:
         int: Exit status code (0 for success, 84 for error).
     """
-    model_path = artifact.final_model_path
-    if model_path is None:
-        print("No final model found in artifact -> exit...", file=sys.stderr)
+    model_files = artifact.get_all_final_models()
+    if not model_files:
+        print("No models found to evaluate.", file=sys.stderr)
         return 84
 
     settings = load_settings()
     env_id = settings["environment"]["env_id"]
     n_episodes = settings["evaluation"]["n_episodes"]
 
-    env = make_env(artifact.final_model_name, env_id, artifact.videos_folder)
+    print(f"Starting evaluating on {env_id} with seed {seed_value}")
+    print(f"Artifact folder: {artifact.videos_folder}")
+    for model_file in model_files:
+        model_name = model_file.replace(".pth", "")
+        model_path = os.path.join(artifact.models_folder, model_file)
 
-    print(f"Model found : {artifact.final_model_name}")
-    print(f"Loading from: {model_path}")
-    agent = DQNAgent(state_dim=8, action_dim=4)
-    agent.policy_net.load_state_dict(torch.load(model_path))
-    agent.policy_net.eval()
-    agent.epsilon = 0.0
+        print(f"Model name: {model_name}")
 
-    print("Evaluating...")
-    for ep in range(n_episodes):
-        obs, _ = env.reset(seed=SEED + ep)
-        done = False
+        env = make_video_env(
+            env_id=env_id,
+            base_folder=artifact.videos_folder,
+            mode="eval",
+            model_name=model_name,
+            seed=seed_value
+        )
 
-        print(f"Episode {ep + 1} / {n_episodes}")
-        while not done:
-            action = agent.select_action(obs)
-            obs, _, terminated, truncated, _ = env.step(action)
+        agent = DQNAgent(state_dim=8, action_dim=4)
+        agent.policy_net.load_state_dict(torch.load(model_path))
+        agent.policy_net.eval()
+        agent.epsilon = 0.0
 
-            if terminated or truncated:
-                done = True
+        for ep in range(n_episodes):
+            obs, _ = env.reset(seed=seed_value + ep)
+            done = False
 
-    env.close()
+            print(f"Episode {ep + 1} / {n_episodes}")
+            while not done:
+                action = agent.select_action(obs)
+                obs, _, terminated, truncated, _ = env.step(action)
+                done = terminated or truncated
+
+        env.close()
     return 0
 
 
@@ -95,4 +83,4 @@ if __name__ == "__main__":
         load_path=args.artifact,
     )
 
-    sys.exit(evaluate(artifact))
+    sys.exit(evaluate(args.seed, artifact))

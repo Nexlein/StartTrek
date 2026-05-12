@@ -2,11 +2,13 @@
 
 set -e
 
+SEEDS="0 5"
+
 echo "Reproducing StartTrek tests..."
 
 echo ""
-echo "[1/2] Starting Baselines (Random & Heuristic)..."
-python3 baseline.py
+echo "[1/3] Starting Baselines (Random & Heuristic)..."
+python3 -W ignore baseline.py
 
 latest_artifact=$(ls -td artifacts/*/ | head -n 1)
 
@@ -18,12 +20,20 @@ fi
 echo "Using artifact folder: $latest_artifact"
 
 echo ""
-echo "[2/2] Starting training on 5 seeds (0 to 4)..."
-for seed in {0..4}
+echo "[2/3] Starting training on 5 seeds (0 to 4)..."
+for seed in $SEEDS
 do
     echo "Training in progress with SEED : $seed"
-    python train.py --seed $seed --artifact "$latest_artifact"
+    python3 -W ignore train.py --seed $seed --artifact "$latest_artifact"
+    echo ""
 done
 
-echo ""
+echo "[3/3] Starting evaluating on 5 seeds (0 to 4)..."
+for seed in $SEEDS
+do
+    echo "Evaluating in progress with SEED : $seed"
+    python3 -W ignore eval.py --seed $seed --artifact "$latest_artifact"
+    echo ""
+done
+
 echo "Reproduction completed."

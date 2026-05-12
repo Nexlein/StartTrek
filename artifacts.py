@@ -149,6 +149,11 @@ class Artifacts:
         torch.save(model, self._models_folder + fileName)
         self.final_model_name = fileName
 
+    def get_all_final_models(self) -> List[str]:
+        if not os.path.exists(self._models_folder):
+            return []
+        return [f for f in os.listdir(self._models_folder) if f.startswith("final_model")]
+
     def generate_report(self):
         replace_variables = {
             "[date]":     self._date,

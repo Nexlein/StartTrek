@@ -14,7 +14,7 @@ import gymnasium as gym
 
 from artifacts import Artifacts
 from model.agent import DQNAgent
-from utils import load_hyperparameters, load_settings
+from utils import load_hyperparameters, load_settings, make_video_env
 
 
 def seed_everything(seed: int):
@@ -56,11 +56,11 @@ def train(seed_value: int, artifact: Artifacts):
     max_episodes = settings["training"]["max_episodes"]
 
     env = gym.make(env_id, render_mode="rgb_array")
-    env = gym.wrappers.RecordVideo(
-        env = env,
-        video_folder= f"{artifact.videos_folder}/train_seed_{seed_value}",
-        name_prefix="train",
-        episode_trigger=lambda x: True,
+    env = make_video_env(
+        env_id=env_id,
+        base_folder=artifact.videos_folder,
+        mode="train",
+        seed=seed_value
     )
 
     agent = DQNAgent(state_dim=8, action_dim=4)
@@ -74,7 +74,7 @@ def train(seed_value: int, artifact: Artifacts):
     epsilon_decay = 0.995
 
     print(f"Starting training on {env_id} with seed {seed_value}")
-    print(f"artifact folder : {artifact.videos_folder}")
+    print(f"Artifact folder: {artifact.videos_folder}")
 
     for episode in range(max_episodes):
         state, _ = env.reset(seed=seed_value + episode)
