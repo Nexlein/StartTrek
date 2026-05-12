@@ -4,8 +4,6 @@ set -e
 
 SEEDS="0 5"
 
-SEEDS="0 5"
-
 echo "Reproducing StartTrek tests..."
 
 echo ""
