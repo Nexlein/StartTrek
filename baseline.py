@@ -5,32 +5,10 @@
 ## baseline
 ##
 
-import os
-import gymnasium as gym
-from utils import load_settings
+from artifacts import Artifacts
+from utils import load_settings, make_video_env
 
-
-def make_video_env(name: str, env_id: str, video_folder: str):
-    """
-    Create a Gymnasium environment with video recording enabled.
-
-    Args:
-        name (str): The name prefix for the recorded video files and folder.
-
-    Returns:
-        gym.Env: The wrapped Gymnasium environment capable of recording videos.
-    """
-    env = gym.make(env_id, render_mode="rgb_array")
-    env = gym.wrappers.RecordVideo(
-        env=env,
-        video_folder=os.path.join(video_folder, name),
-        name_prefix=name,
-        episode_trigger=lambda x: True,
-    )
-    return env
-
-
-def random_policy():
+def random_policy(artifact: Artifacts, seed: int = 0):
     """
     Run a baseline agent that selects actions completely at random.
 
@@ -39,11 +17,14 @@ def random_policy():
     """
     settings = load_settings()
     print("--- Running Random Policy Baseline ---")
+
     env = make_video_env(
-        "baseline_random",
-        settings["environment"]["env_id"],
-        settings["paths"]["video_folder"],
+        env_id=settings["environment"]["env_id"],
+        base_folder=artifact.videos_folder,
+        mode="baseline",
+        model_name="random"
     )
+
     for ep in range(3):
         env.reset(seed=1 + ep)
         done = False
@@ -54,7 +35,7 @@ def random_policy():
     env.close()
 
 
-def heuristic_policy():
+def heuristic_policy(artifact: Artifacts):
     """
     Run a baseline agent that uses a hardcoded heuristic to select actions.
 
@@ -64,11 +45,14 @@ def heuristic_policy():
     """
     settings = load_settings()
     print("--- Running Heuristic Policy Baseline ---")
+
     env = make_video_env(
-        "baseline_heuristic",
-        settings["environment"]["env_id"],
-        settings["paths"]["video_folder"],
+        env_id=settings["environment"]["env_id"],
+        base_folder=artifact.videos_folder,
+        mode="baseline",
+        model_name="heuristic"
     )
+
     for ep in range(3):
         obs, _ = env.reset(seed=1 + ep)
         done = False
@@ -93,5 +77,10 @@ def heuristic_policy():
 
 
 if __name__ == "__main__":
-    random_policy()
-    heuristic_policy()
+    artifact = Artifacts(
+        configs=["configs/settings.yml", "configs/hyperparameters.yml"]
+    )
+    random_policy(artifact)
+    heuristic_policy(artifact)
+
+    artifact.generate_report()
