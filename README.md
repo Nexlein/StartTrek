@@ -40,15 +40,21 @@ python train.py --seed 42
 
 # Train with domain randomization (randomly toggles wind and power each episode)
 python train.py --random-wind
+
+# Train and save the output to a specific artifact (replacing/adding to its content)
+python train.py --artifact artifacts/YYYY-MM-DD_HH:MM:SS/
 ```
 
 ### Evaluation
 
-Evaluate trained models and generate landing videos. You must specify a path to an artifact folder. You can optionally override the seed and wind settings. The wind behavior in evaluation is strict and can be explicitly controlled:
+Evaluate trained models and generate landing videos. You must specify a path to an artifact folder, or directly to a specific model within an artifact. You can optionally override the seed and wind settings. The wind behavior in evaluation is strict and can be explicitly controlled:
 
 ```bash
-# Evaluate models in a specific artifact folder (uses evaluation wind settings from config)
+# Evaluate all models in a specific artifact folder (uses evaluation wind settings from config)
 python eval.py --artifact artifacts/YYYY-MM-DD_HH:MM:SS/
+
+# Evaluate a specific model directly
+python eval.py --artifact artifacts/YYYY-MM-DD_HH:MM:SS/models/<MODEL_NAME>.pth
 
 # Evaluate with a specific seed and default wind power (15.0)
 python eval.py --artifact artifacts/YYYY-MM-DD_HH:MM:SS/ --seed 42 --wind
