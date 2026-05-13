@@ -6,14 +6,14 @@
 ##
 
 import os
-import gymnasium as gym
-from gymnasium.envs.box2d.lunar_lander import LunarLander
 import torch
 import random
 import argparse
 import numpy as np
+import gymnasium as gym
 from artifacts import Artifacts
 from model.agent import DQNAgent
+from gymnasium.envs.box2d.lunar_lander import LunarLander
 from utils import load_hyperparameters, load_settings, make_video_env
 
 
@@ -129,6 +129,14 @@ def train(artifact: Artifacts, cli_seed=None, cli_random_wind=None):
 
         artifact.log_step([episode, episode_reward, step, agent.epsilon])
 
+        if episode_reward > best_reward:
+            best_reward = episode_reward
+            if artifact.model_path is not None:
+                os.remove(artifact.model_path)
+            artifact.save_best_model(agent.policy_net.state_dict(), seed_value, episode)
+            print(f"New best model saved with reward: {best_reward:.2f}")
+            continue
+
         if episode > 0:
             if episode + 1 == max_episodes:
                 artifact.save_final_model(
@@ -138,12 +146,6 @@ def train(artifact: Artifacts, cli_seed=None, cli_random_wind=None):
                 artifact.save_checkpoint_model(
                     agent.policy_net.state_dict(), seed_value, episode
                 )
-
-        if episode_reward > best_reward:
-            best_reward = episode_reward
-            os.makedirs(artifact.models_folder, exist_ok=True)
-            artifact.save_best_model(agent.policy_net.state_dict(), seed_value, episode)
-            print(f"New best model saved with reward: {best_reward:.2f}")
 
     env.close()
 
@@ -167,6 +169,6 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    artifact_obj = Artifacts(load_path=args.artifact)
+    artifact_obj = Artifacts(load_path=args.artifact, configs=["configs/hyperparameters.yml", "configs/settings.yml"])
 
     train(artifact=artifact_obj, cli_seed=args.seed, cli_random_wind=args.random_wind)
