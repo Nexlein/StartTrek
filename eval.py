@@ -30,10 +30,13 @@ def eval_model(artifact: Artifacts, cli_seed=None, cli_wind=None):
     Returns:
         int: Exit status code (0 for success, 84 for error).
     """
-    model_files = artifact.get_all_final_models()
-    if not model_files:
-        print("No models found to evaluate.", file=sys.stderr)
-        return 84
+    if not artifact.name_given:
+        model_files = artifact.get_models()
+        if not model_files:
+            print("No models found to evaluate.", file=sys.stderr)
+            return 84
+    else:
+        model_files = [artifact.model_name]
 
     settings = load_settings()
     env_id = settings["environment"]["env_id"]
@@ -69,7 +72,7 @@ def eval_model(artifact: Artifacts, cli_seed=None, cli_wind=None):
             wind_power=wind_power,
         )
 
-        print(f"Model found : {artifact.final_model_name}")
+        print(f"Model found : {model_name}")
         print(f"Loading from: {model_path}")
 
         agent = DQNAgent(state_dim=8, action_dim=4)
