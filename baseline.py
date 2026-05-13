@@ -8,6 +8,7 @@
 from artifacts import Artifacts
 from utils import load_settings, make_video_env
 
+
 def random_policy(artifact: Artifacts, seed: int = 0):
     """
     Run a baseline agent that selects actions completely at random.
@@ -22,7 +23,7 @@ def random_policy(artifact: Artifacts, seed: int = 0):
         env_id=settings["environment"]["env_id"],
         base_folder=artifact.videos_folder,
         mode="baseline",
-        model_name="random"
+        model_name="random",
     )
 
     for ep in range(3):
@@ -50,7 +51,7 @@ def heuristic_policy(artifact: Artifacts):
         env_id=settings["environment"]["env_id"],
         base_folder=artifact.videos_folder,
         mode="baseline",
-        model_name="heuristic"
+        model_name="heuristic",
     )
 
     for ep in range(3):
