@@ -13,6 +13,7 @@ from typing import List
 
 ARTIFACTS_FOLDER = "artifacts/"
 
+
 class Artifacts:
     _date: str
     _name: str
@@ -30,9 +31,9 @@ class Artifacts:
 
     def __init__(
         self,
-        configs: List[str] = None,
-        load_path: str = None,
-        log_header: str = "Episode,Reward,Length,Epsilon"
+        configs: List[str] | None = None,
+        load_path: str | None = None,
+        log_header: str = "Episode,Reward,Length,Epsilon",
     ):
         """
         Initialise or load an artifact.
@@ -119,14 +120,14 @@ class Artifacts:
     def _make_subdirs(self):
         """Create the standard sub-directories."""
         self._configs_folder = self._folder + "configs/"
-        self._models_folder  = self._folder + "models/"
-        self._videos_folder  = self._folder + "videos/"
-        self._logs_folder    = self._folder + "logs/"
+        self._models_folder = self._folder + "models/"
+        self._videos_folder = self._folder + "videos/"
+        self._logs_folder = self._folder + "logs/"
 
         os.makedirs(self._configs_folder, exist_ok=True)
-        os.makedirs(self._models_folder,  exist_ok=True)
-        os.makedirs(self._videos_folder,  exist_ok=True)
-        os.makedirs(self._logs_folder,    exist_ok=True)
+        os.makedirs(self._models_folder, exist_ok=True)
+        os.makedirs(self._videos_folder, exist_ok=True)
+        os.makedirs(self._logs_folder, exist_ok=True)
 
     def _init_log(self, log_header: str):
         """Write the CSV header if the log file does not exist yet."""
@@ -149,22 +150,27 @@ class Artifacts:
         torch.save(model, self._models_folder + fileName)
         self.final_model_name = fileName
 
+    def save_best_model(self, model: object, seed: int, episode: int):
+        fileName = f"best_model_seed_{seed}_ep_{episode}.pth"
+        torch.save(model, self._models_folder + fileName)
+
     def get_all_final_models(self) -> List[str]:
         if not os.path.exists(self._models_folder):
             return []
-        return [f for f in os.listdir(self._models_folder) if f.startswith("final_model")]
+        return [
+            f for f in os.listdir(self._models_folder) if f.startswith("final_model")
+        ]
 
     def generate_report(self):
         replace_variables = {
-            "[date]":     self._date,
+            "[date]": self._date,
             "[run_name]": self._name,
         }
 
         template_path = ARTIFACTS_FOLDER + "Report.md.template"
-        report_path   = self._folder + self._report_name
+        report_path = self._folder + self._report_name
 
-        with open(template_path, "r") as template, \
-             open(report_path,   "w") as report:
+        with open(template_path, "r") as template, open(report_path, "w") as report:
             for line in template:
                 for variable, value in replace_variables.items():
                     if variable in line:
