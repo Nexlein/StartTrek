@@ -13,6 +13,7 @@ from artifacts import Artifacts
 from model.agent import DQNAgent
 from utils import load_settings, make_video_env
 
+
 def eval_model(artifact: Artifacts, cli_seed=None, cli_wind=None):
     """
     Evaluate a trained DQN model.
@@ -39,11 +40,11 @@ def eval_model(artifact: Artifacts, cli_seed=None, cli_wind=None):
     n_episodes = settings["evaluation"]["n_episodes"]
 
     if cli_wind is None:
-        enable_wind = settings["environment"].get("enable_wind", False)
-        wind_power = settings["environment"].get("wind_power", 15.0)
+        enable_wind = settings["evaluation"].get("enable_wind", False)
+        wind_power = settings["evaluation"].get("wind_power", 15.0)
     elif cli_wind == -1.0:
         enable_wind = True
-        wind_power = settings["environment"].get("wind_power", 15.0)
+        wind_power = settings["evaluation"].get("wind_power", 15.0)
     else:
         enable_wind = True
         wind_power = cli_wind
@@ -54,6 +55,7 @@ def eval_model(artifact: Artifacts, cli_seed=None, cli_wind=None):
 
     print(f"Starting evaluating on {env_id} with seed {seed_value}")
     print(f"Artifact videos folder: {artifact.videos_folder}")
+    env = None
     for model_file in model_files:
         model_name = model_file.replace(".pth", "")
         model_path = os.path.join(artifact.models_folder, model_file)
@@ -64,7 +66,7 @@ def eval_model(artifact: Artifacts, cli_seed=None, cli_wind=None):
             mode="eval",
             model_name=model_name,
             enable_wind=enable_wind,
-            wind_power=wind_power
+            wind_power=wind_power,
         )
 
         print(f"Model found : {artifact.final_model_name}")
@@ -85,14 +87,15 @@ def eval_model(artifact: Artifacts, cli_seed=None, cli_wind=None):
             while not done:
                 action = agent.select_action(obs)
                 obs, reward, terminated, truncated, _ = env.step(action)
-                episode_reward += reward
+                episode_reward += float(reward)
 
                 if terminated or truncated:
                     done = True
 
             print(f"Finished Episode {ep + 1} with Reward: {episode_reward:.2f}")
 
-    env.close()
+    if env is not None:
+        env.close()
     return 0
 
 
@@ -122,10 +125,4 @@ if __name__ == "__main__":
 
     artifact_obj = Artifacts(load_path=args.artifact)
 
-    sys.exit(
-        eval_model(
-            artifact=artifact_obj,
-            cli_seed=args.seed,
-            cli_wind=args.wind
-        )
-    )
+    sys.exit(eval_model(artifact=artifact_obj, cli_seed=args.seed, cli_wind=args.wind))
