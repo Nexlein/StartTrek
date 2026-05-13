@@ -7,7 +7,7 @@
 Python 3.14 is recommended.
 
 ```bash
-python3 -m venv .venv
+python3.14 -m venv .venv
 source .venv/bin/activate
 ```
 
@@ -29,7 +29,7 @@ python baseline.py
 
 ### Training
 
-Train the DQN agent. You can specify a random seed or enable wind disturbances (these CLI arguments override `configs/settings.yml`):
+Train the DQN agent. You can specify a random seed or enable domain randomization (these CLI arguments override `configs/settings.yml`). During training, the agent saves a checkpoint every 50 episodes and automatically keeps track of the best performing model (saved as `model_seed_<seed>_best.pth`):
 
 ```bash
 # Default training (uses settings from config)
@@ -38,26 +38,26 @@ python train.py
 # Train with a specific seed
 python train.py --seed 42
 
-# Train with wind enabled (uses wind_power from config)
-python train.py --wind
-
-# Train with wind enabled and a custom wind power
-python train.py --wind 20.0
+# Train with domain randomization (randomly toggles wind and power each episode)
+python train.py --random-wind
 ```
 
 ### Evaluation
 
-Evaluate a trained model and generate a landing video. You can evaluate the default model or specify a path, and optionally override the seed and wind settings:
+Evaluate a trained model and generate a landing video. You can evaluate the default model or specify a path, and optionally override the seed and wind settings. The wind behavior in evaluation is strict and can be explicitly controlled:
 
 ```bash
-# Evaluate the default model (results/models/dqn-model.pth)
+# Evaluate the default model (uses evaluation wind settings from config)
 python eval.py
 
 # Evaluate a specific model
 python eval.py results/models/<MODEL_NAME>.pth
 
-# Evaluate with a specific seed and wind enabled
+# Evaluate with a specific seed and default wind power (15.0)
 python eval.py --seed 42 --wind
+
+# Evaluate with a specific seed and a custom wind power (e.g., 20.0)
+python eval.py --seed 42 --wind 20.0
 ```
 
 ### Reproducibility

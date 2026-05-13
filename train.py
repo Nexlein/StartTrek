@@ -6,14 +6,16 @@
 ##
 
 import os
+import gymnasium as gym
+from gymnasium.envs.box2d.lunar_lander import LunarLander
 import torch
 import random
 import argparse
 import numpy as np
-import gymnasium as gym
 from artifacts import Artifacts
 from model.agent import DQNAgent
 from utils import load_hyperparameters, load_settings, make_video_env
+
 
 def seed_everything(seed: int):
     """
@@ -34,7 +36,7 @@ def seed_everything(seed: int):
         torch.backends.cudnn.benchmark = False
 
 
-def train(artifact: Artifacts, cli_seed=None, cli_wind=None):
+def train(artifact: Artifacts, cli_seed=None, cli_random_wind=None):
     """
     Train the DQNAgent on the LunarLander environment.
 
@@ -45,9 +47,7 @@ def train(artifact: Artifacts, cli_seed=None, cli_wind=None):
     Args:
         artifacts (Artifacts): An instance of the Artifacts class.
         cli_seed (int, optional): Overrides the seed from settings.yml if provided. Defaults to None.
-        cli_wind (float, optional): Overrides the wind configuration.
-                                    None uses config, -1.0 uses config power but forces True,
-                                    any other >= 0 float uses that as wind power. Defaults to None.
+        cli_random_wind (bool, optional): Overrides random_wind from config if provided. Defaults to None.
     """
     settings = load_settings()
 
@@ -56,32 +56,20 @@ def train(artifact: Artifacts, cli_seed=None, cli_wind=None):
     )
     seed_everything(seed_value)
 
+    random_wind_value = (
+        cli_random_wind
+        if cli_random_wind is not None
+        else settings["environment"].get("random_wind", False)
+    )
+
     config = load_hyperparameters()
     env_id = settings["environment"]["env_id"]
     max_episodes = settings["training"]["max_episodes"]
 
-    if cli_wind is None:
-        enable_wind = settings["environment"].get("enable_wind", False)
-        wind_power = settings["environment"].get("wind_power", 15.0)
-    elif cli_wind == -1.0:
-        enable_wind = True
-        wind_power = settings["environment"].get("wind_power", 15.0)
-    else:
-        enable_wind = True
-        wind_power = cli_wind
-
-    env = gym.make(
-        env_id, 
-        render_mode="rgb_array", 
-        enable_wind=enable_wind, 
-        wind_power=wind_power
-    )
+    env = gym.make(env_id, render_mode="rgb_array")
 
     env = make_video_env(
-        env_id=env_id,
-        base_folder=artifact.videos_folder,
-        mode="train",
-        seed=seed_value
+        env_id=env_id, base_folder=artifact.videos_folder, mode="train", seed=seed_value
     )
 
     agent = DQNAgent(state_dim=8, action_dim=4)
@@ -94,10 +82,24 @@ def train(artifact: Artifacts, cli_seed=None, cli_wind=None):
     agent.epsilon_min = config["exploration_final_eps"]
     epsilon_decay = 0.995
 
-    print(f"Starting training on {env_id} with seed {seed_value} (Wind: {enable_wind}, Power: {wind_power})")
+    print(
+        f"Starting training on {env_id} with seed {seed_value} and random_wind={random_wind_value}"
+    )
     print(f"Artifact videos folder : {artifact.videos_folder}")
 
+    best_reward = -float("inf")
+
     for episode in range(max_episodes):
+        if random_wind_value:
+            # Randomly toggle wind for this episode
+            is_windy = random.choice([True, False])
+
+            unwrapped_env = env.unwrapped
+            if isinstance(unwrapped_env, LunarLander):
+                unwrapped_env.enable_wind = is_windy
+                if is_windy:
+                    unwrapped_env.wind_power = random.uniform(5.0, 20.0)
+
         state, _ = env.reset(seed=seed_value + episode)
         episode_reward = 0.0
         done = False
@@ -124,16 +126,27 @@ def train(artifact: Artifacts, cli_seed=None, cli_wind=None):
         print(
             f"Episode {episode}: Score = {episode_reward:.2f}, Steps = {step}, Epsilon = {agent.epsilon:.2f}"
         )
-        
+
         artifact.log_step([episode, episode_reward, step, agent.epsilon])
 
         if episode > 0:
             if episode + 1 == max_episodes:
-                artifact.save_final_model(agent.policy_net.state_dict(), seed_value, episode)
+                artifact.save_final_model(
+                    agent.policy_net.state_dict(), seed_value, episode
+                )
             elif episode % 50 == 0:
-                artifact.save_checkpoint_model(agent.policy_net.state_dict(), seed_value, episode)
+                artifact.save_checkpoint_model(
+                    agent.policy_net.state_dict(), seed_value, episode
+                )
+
+        if episode_reward > best_reward:
+            best_reward = episode_reward
+            os.makedirs(artifact.models_folder, exist_ok=True)
+            artifact.save_best_model(agent.policy_net.state_dict(), seed_value, episode)
+            print(f"New best model saved with reward: {best_reward:.2f}")
 
     env.close()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -144,21 +157,16 @@ if __name__ == "__main__":
         help="Seed value for reproducibility (overrides settings.yml)",
     )
     parser.add_argument(
-        "--wind",
-        nargs="?",
-        type=float,
-        const=-1.0,
+        "--random-wind",
+        action="store_true",
         default=None,
-        help="Enable wind in the environment. Optionally provide wind power (e.g., --wind 15.0)",
+        help="Randomize wind presence and power across episodes for robust training (overrides settings.yml)",
     )
     parser.add_argument(
-        "--artifact",
-        type=str,
-        default=None,
-        help="Path to an existing artifact folder"
+        "--artifact", type=str, default=None, help="Path to an existing artifact folder"
     )
     args = parser.parse_args()
 
     artifact_obj = Artifacts(load_path=args.artifact)
 
-    train(artifact=artifact_obj, cli_seed=args.seed, cli_wind=args.wind)
+    train(artifact=artifact_obj, cli_seed=args.seed, cli_random_wind=args.random_wind)

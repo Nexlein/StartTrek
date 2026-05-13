@@ -3,10 +3,8 @@
 environment:
   # The Gymnasium/Environment ID to use
   env_id: "LunarLander-v3"
-  # Enable wind dynamics to test agent robustness
-  enable_wind: false
-  # Strength of the wind (only applied if enable_wind is true)
-  wind_power: 15.0
+  # Randomize wind presence and power across episodes for robust training
+  random_wind: false
   # Global seed for environment and random number generators
   seed: 1
 
@@ -17,6 +15,10 @@ training:
 evaluation:
   # Number of episodes to run during the evaluation phase
   n_episodes: 10
+  # Default wind presence during evaluation (overridden by --wind CLI argument)
+  enable_wind: false
+  # Default wind power during evaluation if wind is enabled
+  wind_power: 15.0
 
 paths:
   # Directories for outputs (must include trailing slash)
