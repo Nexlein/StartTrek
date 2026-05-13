@@ -29,7 +29,7 @@ python baseline.py
 
 ### Training
 
-Train the DQN agent. You can specify a random seed or enable domain randomization (these CLI arguments override `configs/settings.yml`). During training, the agent saves a checkpoint every 50 episodes and automatically keeps track of the best performing model (saved as `model_seed_<seed>_best.pth`):
+Train the DQN agent. You can specify a random seed or enable domain randomization (these CLI arguments override `configs/settings.yml`). During training, the agent saves a checkpoint every 50 episodes and automatically keeps track of the best performing model (saved as `best_model_seed_<seed>.pth`):
 
 ```bash
 # Default training (uses settings from config)
@@ -44,20 +44,17 @@ python train.py --random-wind
 
 ### Evaluation
 
-Evaluate a trained model and generate a landing video. You can evaluate the default model or specify a path, and optionally override the seed and wind settings. The wind behavior in evaluation is strict and can be explicitly controlled:
+Evaluate trained models and generate landing videos. You must specify a path to an artifact folder. You can optionally override the seed and wind settings. The wind behavior in evaluation is strict and can be explicitly controlled:
 
 ```bash
-# Evaluate the default model (uses evaluation wind settings from config)
-python eval.py
-
-# Evaluate a specific model
-python eval.py results/models/<MODEL_NAME>.pth
+# Evaluate models in a specific artifact folder (uses evaluation wind settings from config)
+python eval.py --artifact artifacts/YYYY-MM-DD_HH:MM:SS/
 
 # Evaluate with a specific seed and default wind power (15.0)
-python eval.py --seed 42 --wind
+python eval.py --artifact artifacts/YYYY-MM-DD_HH:MM:SS/ --seed 42 --wind
 
 # Evaluate with a specific seed and a custom wind power (e.g., 20.0)
-python eval.py --seed 42 --wind 20.0
+python eval.py --artifact artifacts/YYYY-MM-DD_HH:MM:SS/ --seed 42 --wind 20.0
 ```
 
 ### Reproducibility

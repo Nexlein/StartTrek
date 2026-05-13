@@ -72,15 +72,14 @@ def train(artifact: Artifacts, cli_seed=None, cli_random_wind=None):
         env_id=env_id, base_folder=artifact.videos_folder, mode="train", seed=seed_value
     )
 
-    agent = DQNAgent(state_dim=8, action_dim=4)
-    agent.optimizer.param_groups[0]["lr"] = config["learning_rate"]
+    agent = DQNAgent(state_dim=8, action_dim=4, lr=config["learning_rate"])
     agent.gamma = config["gamma"]
     buffer_size = config.get("buffer_size", agent.memory.memory.maxlen)
     agent.memory.set_capacity(buffer_size)
 
     agent.epsilon = config["exploration_initial_eps"]
     agent.epsilon_min = config["exploration_final_eps"]
-    epsilon_decay = 0.995
+    epsilon_decay = config.get("exploration_decay", 0.9995)
 
     print(
         f"Starting training on {env_id} with seed {seed_value} and random_wind={random_wind_value}"
@@ -120,22 +119,14 @@ def train(artifact: Artifacts, cli_seed=None, cli_random_wind=None):
             episode_reward += float(reward)
             step += 1
 
-        if agent.epsilon > agent.epsilon_min:
-            agent.epsilon *= epsilon_decay
+            if agent.epsilon > agent.epsilon_min:
+                agent.epsilon *= epsilon_decay
 
         print(
             f"Episode {episode}: Score = {episode_reward:.2f}, Steps = {step}, Epsilon = {agent.epsilon:.2f}"
         )
 
         artifact.log_step([episode, episode_reward, step, agent.epsilon])
-
-        if episode_reward > best_reward:
-            best_reward = episode_reward
-            if artifact.model_path is not None:
-                os.remove(artifact.model_path)
-            artifact.save_best_model(agent.policy_net.state_dict(), seed_value, episode)
-            print(f"New best model saved with reward: {best_reward:.2f}")
-            continue
 
         if episode > 0:
             if episode + 1 == max_episodes:
@@ -146,6 +137,12 @@ def train(artifact: Artifacts, cli_seed=None, cli_random_wind=None):
                 artifact.save_checkpoint_model(
                     agent.policy_net.state_dict(), seed_value, episode
                 )
+
+        if episode_reward > best_reward:
+            best_reward = episode_reward
+            os.makedirs(artifact.models_folder, exist_ok=True)
+            artifact.save_best_model(agent.policy_net.state_dict(), seed_value)
+            print(f"New best model saved with reward: {best_reward:.2f}")
 
     env.close()
 

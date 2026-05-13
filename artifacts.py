@@ -184,8 +184,8 @@ class Artifacts:
         fileName = f"final_model_seed_{seed}_ep_{episode}.pth"
         torch.save(model, self._models_folder + fileName)
 
-    def save_best_model(self, model: object, seed: int, episode: int):
-        fileName = f"best_model_seed_{seed}_ep_{episode}.pth"
+    def save_best_model(self, model: object, seed: int):
+        fileName = f"best_model_seed_{seed}.pth"
         torch.save(model, self._models_folder + fileName)
         self._model_name = fileName
 

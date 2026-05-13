@@ -97,8 +97,9 @@ def eval_model(artifact: Artifacts, cli_seed=None, cli_wind=None):
 
             print(f"Finished Episode {ep + 1} with Reward: {episode_reward:.2f}")
 
-    if env is not None:
-        env.close()
+        if env is not None:
+            env.close()
+
     return 0
 
 

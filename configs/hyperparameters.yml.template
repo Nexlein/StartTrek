@@ -28,6 +28,8 @@ exploration_initial_eps: 1.0
 exploration_final_eps: 0.02
 # Fraction of total training over which epsilon decays
 exploration_fraction: 0.2
+# Epsilon decay rate per step
+exploration_decay: 0.9995
 
 # Other parameters
 # Discount factor for future rewards

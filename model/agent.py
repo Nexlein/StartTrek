@@ -23,13 +23,14 @@ class DQNAgent:
     replay and an epsilon-greedy exploration strategy.
     """
 
-    def __init__(self, state_dim=8, action_dim=4):
+    def __init__(self, state_dim=8, action_dim=4, lr=0.0001):
         """
         Initialize the DQNAgent with state and action dimensions.
 
         Args:
             state_dim (int): The dimensionality of the state space.
             action_dim (int): The dimensionality of the action space.
+            lr (float): The learning rate for the optimizer.
         """
         self.action_dim = action_dim
 
@@ -40,11 +41,10 @@ class DQNAgent:
 
         self.memory = ReplayMemory(100000)
 
-        self.optimizer = optim.Adam(self.policy_net.parameters(), lr=0.0001)
+        self.optimizer = optim.Adam(self.policy_net.parameters(), lr=lr)
 
         self.epsilon = 1.0
         self.epsilon_min = 0.02
-        self.epsilon_decay = 0.995
         self.gamma = 0.99
 
     def select_action(self, state):
