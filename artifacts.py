@@ -103,8 +103,6 @@ class Artifacts:
                     self._model_name = found[-1]
                     break
 
-        print(f"Model found: {self._model_name}")
-
     @property
     def videos_folder(self) -> str:
         """Absolute path to the videos sub-folder of this artifact."""
