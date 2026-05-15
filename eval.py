@@ -7,6 +7,7 @@
 
 import os
 import sys
+import yaml
 import torch
 import argparse
 from artifacts import Artifacts
@@ -56,6 +57,17 @@ def eval_model(artifact: Artifacts, cli_seed=None, cli_wind=None):
     seed_value = (
         cli_seed if cli_seed is not None else settings["environment"].get("seed", 1)
     )
+
+    # Reflect evaluation overrides in a specific eval settings file within the artifact
+    settings["environment"]["seed"] = seed_value
+    settings["evaluation"]["enable_wind"] = enable_wind
+    settings["evaluation"]["wind_power"] = wind_power
+    with open(
+        os.path.join(artifact.configs_folder, "eval_settings.yml"),
+        "w",
+        encoding="utf-8",
+    ) as f:
+        yaml.dump(settings, f, default_flow_style=False)
 
     print(f"Starting evaluating on {env_id} with seed {seed_value}")
     print(f"Artifact videos folder: {artifact.videos_folder}")
