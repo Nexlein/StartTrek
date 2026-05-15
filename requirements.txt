@@ -1,5 +1,7 @@
 gymnasium[box2d]>=0.29.1,<1.3.0
 gymnasium[other]>=0.29.1,<1.3.0
+pytest-cov
+pytest
 PyYAML
 torch
 numpy
