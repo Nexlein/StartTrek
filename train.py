@@ -112,11 +112,21 @@ def train(artifact: Artifacts, cli_seed=None, cli_random_wind=None):
         episode_reward = 0.0
         done = False
         step = 0
+        termination_reason = "ongoing"
 
         while not done:
             action = agent.select_action(state)
             next_state, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
+
+            if done:
+                if terminated:
+                    if float(reward) <= -100:
+                        termination_reason = "crash"
+                    else:
+                        termination_reason = "sleep"
+                elif truncated:
+                    termination_reason = "out-of-view"
 
             agent.memory.push(state, action, reward, next_state, terminated)
 
@@ -132,10 +142,12 @@ def train(artifact: Artifacts, cli_seed=None, cli_random_wind=None):
                 agent.epsilon *= epsilon_decay
 
         print(
-            f"Episode {episode}: Score = {episode_reward:.2f}, Steps = {step}, Epsilon = {agent.epsilon:.2f}"
+            f"Episode {episode}: Score = {episode_reward:.2f}, Steps = {step}, Epsilon = {agent.epsilon:.2f}, Cause = {termination_reason}"
         )
 
-        artifact.log_step([episode, episode_reward, step, agent.epsilon])
+        artifact.log_step(
+            [episode, episode_reward, step, agent.epsilon, termination_reason]
+        )
 
         if episode > 0:
             if episode + 1 == max_episodes:

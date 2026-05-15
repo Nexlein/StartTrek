@@ -29,10 +29,21 @@ def random_policy(artifact: Artifacts, seed: int = 0):
     for ep in range(3):
         env.reset(seed=1 + ep)
         done = False
+        termination_reason = "ongoing"
         while not done:
             action = env.action_space.sample()
-            _, _, terminated, truncated, _ = env.step(action)
+            _, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
+
+            if done:
+                if terminated:
+                    if float(reward) <= -100:
+                        termination_reason = "crash"
+                    else:
+                        termination_reason = "sleep"
+                elif truncated:
+                    termination_reason = "out-of-view"
+        print(f"Random Policy Ep {ep + 1} terminated by: {termination_reason}")
     env.close()
 
 
@@ -57,6 +68,7 @@ def heuristic_policy(artifact: Artifacts):
     for ep in range(3):
         obs, _ = env.reset(seed=1 + ep)
         done = False
+        termination_reason = "ongoing"
         while not done:
             # State : [x, y, v_x, v_y, angle, v_angle, left_contact, right_contact]
             angle = obs[4]
@@ -72,8 +84,18 @@ def heuristic_policy(artifact: Artifacts):
             else:
                 action = 0  # Do nothing
 
-            obs, _, terminated, truncated, _ = env.step(action)
+            obs, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
+
+            if done:
+                if terminated:
+                    if float(reward) <= -100:
+                        termination_reason = "crash"
+                    else:
+                        termination_reason = "sleep"
+                elif truncated:
+                    termination_reason = "out-of-view"
+        print(f"Heuristic Policy Ep {ep + 1} terminated by: {termination_reason}")
     env.close()
 
 

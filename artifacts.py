@@ -35,7 +35,7 @@ class Artifacts:
         self,
         configs: List[str] | None = None,
         load_path: str | None = None,
-        log_header: str = "Episode,Reward,Length,Epsilon",
+        log_header: str = "Episode,Reward,Length,Epsilon,Termination",
     ):
         """
         Initialise or load an artifact.
