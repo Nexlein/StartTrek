@@ -4,7 +4,7 @@ environment:
   # The Gymnasium/Environment ID to use
   env_id: "LunarLander-v3"
   # Randomize wind presence and power across episodes for robust training
-  random_wind: false
+  random_wind: true
   # Global seed for environment and random number generators
   seed: 1
 
