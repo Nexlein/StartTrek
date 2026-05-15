@@ -91,9 +91,11 @@ def train(artifact: Artifacts, cli_seed=None, cli_random_wind=None):
     epsilon_decay = config.get("exploration_decay", 0.9995)
 
     print(
-        f"Starting training on {env_id} with seed {seed_value} and random_wind={random_wind_value}"
+        f"[TRAIN] Starting training on {env_id} | Seed: {seed_value} | Random Wind: {random_wind_value}"
     )
-    print(f"Artifact videos folder : {artifact.videos_folder}")
+    print(
+        f"[TRAIN] Artifact tracking enabled. Videos saved to: {artifact.videos_folder}"
+    )
 
     best_reward = -float("inf")
 
@@ -142,7 +144,7 @@ def train(artifact: Artifacts, cli_seed=None, cli_random_wind=None):
                 agent.epsilon *= epsilon_decay
 
         print(
-            f"Episode {episode}: Score = {episode_reward:.2f}, Steps = {step}, Epsilon = {agent.epsilon:.2f}, Cause = {termination_reason}"
+            f"[TRAIN] Episode {episode + 1:4d}/{max_episodes} | Score: {episode_reward:7.2f} | Steps: {step:4d} | Epsilon: {agent.epsilon:.3f} | Cause: {termination_reason}"
         )
 
         artifact.log_step(
@@ -163,7 +165,7 @@ def train(artifact: Artifacts, cli_seed=None, cli_random_wind=None):
             best_reward = episode_reward
             os.makedirs(artifact.models_folder, exist_ok=True)
             artifact.save_best_model(agent.policy_net.state_dict(), seed_value)
-            print(f"New best model saved with reward: {best_reward:.2f}")
+            print(f"[TRAIN] New best model saved! Reward: {best_reward:.2f}")
 
     env.close()
 
