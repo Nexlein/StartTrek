@@ -3,3 +3,4 @@ gymnasium[other]>=0.29.1,<1.3.0
 PyYAML
 torch
 numpy
+scipy
