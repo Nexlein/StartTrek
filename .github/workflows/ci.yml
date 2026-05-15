@@ -56,6 +56,8 @@ jobs:
         run: ruff check .
 
       - name: Tests
+        env:
+          PYTHONPATH: .
         run: |
           if find . -type f \( -name 'test_*.py' -o -name '*_test.py' \) | grep -q .; then
             pytest -q
