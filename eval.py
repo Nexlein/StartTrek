@@ -35,7 +35,7 @@ def eval_model(artifact: Artifacts, cli_seed=None, cli_wind=None):
     if not artifact.name_given or model_name_prop is None:
         model_files = artifact.get_models()
         if not model_files:
-            print("No models found to evaluate.", file=sys.stderr)
+            print("[EVAL] Error: No models found to evaluate.", file=sys.stderr)
             return 84
     else:
         model_files = [model_name_prop]
@@ -58,6 +58,14 @@ def eval_model(artifact: Artifacts, cli_seed=None, cli_wind=None):
         cli_seed if cli_seed is not None else settings["environment"].get("seed", 1)
     )
 
+    if not artifact.name_given and cli_seed is not None:
+        filtered_models = [m for m in model_files if f"seed_{cli_seed}" in m]
+        best_models = [m for m in filtered_models if m.startswith("best_model")]
+        if best_models:
+            model_files = [best_models[-1]]
+        elif filtered_models:
+            model_files = [filtered_models[-1]]
+
     # Reflect evaluation overrides in a specific eval settings file within the artifact
     settings["environment"]["seed"] = seed_value
     settings["evaluation"]["enable_wind"] = enable_wind
@@ -69,8 +77,10 @@ def eval_model(artifact: Artifacts, cli_seed=None, cli_wind=None):
     ) as f:
         yaml.dump(settings, f, default_flow_style=False)
 
-    print(f"Starting evaluating on {env_id} with seed {seed_value}")
-    print(f"Artifact videos folder: {artifact.videos_folder}")
+    print(
+        f"[EVAL] Starting evaluation on {env_id} | Seed: {seed_value} | Wind: {enable_wind} (Power: {wind_power})"
+    )
+    print(f"[EVAL] Videos will be saved to: {artifact.videos_folder}")
     env = None
     for model_file in model_files:
         model_name = model_file.replace(".pth", "")
@@ -85,8 +95,8 @@ def eval_model(artifact: Artifacts, cli_seed=None, cli_wind=None):
             wind_power=wind_power,
         )
 
-        print(f"Model found : {model_name}")
-        print(f"Loading from: {model_path}")
+        print(f"[EVAL] Targeting Model: {model_name}")
+        print(f"[EVAL] Loading weights from: {model_path}")
 
         agent = DQNAgent(state_dim=8, action_dim=4)
         agent.policy_net.load_state_dict(
@@ -95,13 +105,18 @@ def eval_model(artifact: Artifacts, cli_seed=None, cli_wind=None):
         agent.policy_net.eval()
         agent.epsilon = 0.0
 
-        print(f"Evaluating for {n_episodes} episodes (Wind: {enable_wind})...")
+        eval_log_path = os.path.join(
+            artifact.logs_folder, f"eval_scores_seed_{seed_value}.csv"
+        )
+        with open(eval_log_path, "w") as f:
+            f.write("Episode,Reward\n")
+
+        print(f"[EVAL] Running {n_episodes} episodes...")
         for ep in range(n_episodes):
             obs, _ = env.reset(seed=seed_value + ep)
             done = False
             episode_reward = 0.0
 
-            print(f"Episode {ep + 1} / {n_episodes}")
             while not done:
                 action = agent.select_action(obs)
                 obs, reward, terminated, truncated, _ = env.step(action)
@@ -110,7 +125,11 @@ def eval_model(artifact: Artifacts, cli_seed=None, cli_wind=None):
                 if terminated or truncated:
                     done = True
 
-            print(f"Finished Episode {ep + 1} with Reward: {episode_reward:.2f}")
+            with open(eval_log_path, "a") as f:
+                f.write(f"{ep + 1},{episode_reward:.2f}\n")
+            print(
+                f"[EVAL] Episode {ep + 1}/{n_episodes} | Reward: {episode_reward:7.2f}"
+            )
 
         if env is not None:
             env.close()
