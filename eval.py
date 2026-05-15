@@ -76,7 +76,9 @@ def eval_model(artifact: Artifacts, cli_seed=None, cli_wind=None):
         print(f"Loading from: {model_path}")
 
         agent = DQNAgent(state_dim=8, action_dim=4)
-        agent.policy_net.load_state_dict(torch.load(model_path))
+        agent.policy_net.load_state_dict(
+            torch.load(model_path, map_location=agent.device, weights_only=True)
+        )
         agent.policy_net.eval()
         agent.epsilon = 0.0
 
