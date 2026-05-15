@@ -10,7 +10,6 @@ import torch
 import random
 import argparse
 import numpy as np
-import gymnasium as gym
 from artifacts import Artifacts
 from model.agent import DQNAgent
 from gymnasium.envs.box2d.lunar_lander import LunarLander
@@ -66,10 +65,12 @@ def train(artifact: Artifacts, cli_seed=None, cli_random_wind=None):
     env_id = settings["environment"]["env_id"]
     max_episodes = settings["training"]["max_episodes"]
 
-    env = gym.make(env_id, render_mode="rgb_array")
-
     env = make_video_env(
-        env_id=env_id, base_folder=artifact.videos_folder, mode="train", seed=seed_value
+        env_id=env_id,
+        base_folder=artifact.videos_folder,
+        mode="train",
+        seed=seed_value,
+        video_freq=0,
     )
 
     agent = DQNAgent(state_dim=8, action_dim=4, lr=config["learning_rate"])
@@ -166,6 +167,9 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    artifact_obj = Artifacts(load_path=args.artifact, configs=["configs/hyperparameters.yml", "configs/settings.yml"])
+    artifact_obj = Artifacts(
+        load_path=args.artifact,
+        configs=["configs/hyperparameters.yml", "configs/settings.yml"],
+    )
 
     train(artifact=artifact_obj, cli_seed=args.seed, cli_random_wind=args.random_wind)
