@@ -30,13 +30,14 @@ def eval_model(artifact: Artifacts, cli_seed=None, cli_wind=None):
     Returns:
         int: Exit status code (0 for success, 84 for error).
     """
-    if not artifact.name_given:
+    model_name_prop = artifact.model_name
+    if not artifact.name_given or model_name_prop is None:
         model_files = artifact.get_models()
         if not model_files:
             print("No models found to evaluate.", file=sys.stderr)
             return 84
     else:
-        model_files = [artifact.model_name]
+        model_files = [model_name_prop]
 
     settings = load_settings()
     env_id = settings["environment"]["env_id"]
@@ -76,7 +77,9 @@ def eval_model(artifact: Artifacts, cli_seed=None, cli_wind=None):
         print(f"Loading from: {model_path}")
 
         agent = DQNAgent(state_dim=8, action_dim=4)
-        agent.policy_net.load_state_dict(torch.load(model_path))
+        agent.policy_net.load_state_dict(
+            torch.load(model_path, map_location=agent.device, weights_only=True)
+        )
         agent.policy_net.eval()
         agent.epsilon = 0.0
 

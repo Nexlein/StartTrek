@@ -17,7 +17,7 @@ ARTIFACTS_FOLDER = "artifacts/"
 
 class Artifacts:
     _date: str
-    _name: str
+    _name: str | None
     _folder: str
 
     _configs_folder: str
@@ -62,6 +62,7 @@ class Artifacts:
     def _create(self, configs: List[str], log_header: str):
         """Create a brand-new artifact with timestamped folder."""
         self._create_artifact_name()
+        assert self._name is not None
 
         self._folder = ARTIFACTS_FOLDER + self._name
         self._make_subdirs()
@@ -74,34 +75,34 @@ class Artifacts:
 
     def _load(self, load_path: str):
         """Load an existing artifact from load_path."""
-        stripped = load_path.rstrip("/")
-        contents = stripped.split("/")
-        for content in contents:
-            name = re.search(r'(\d+-\d+-\d+_\d+:\d+:\d+)', content)
-            if name:
-                self._name = name.string + "/"
-            if content.endswith(".pth"):
-                self._model_name = content
+        name: str | None = None
+
+        path_parts = os.path.normpath(load_path).split(os.sep)
+        for part in path_parts:
+            if re.search(r"\d+-\d+-\d+_\d+:\d+:\d+", part):
+                name = part + "/"
+            if part.endswith(".pth"):
+                self._model_name = part
                 self._has_name_given = True
 
-        if self._name is None:
+        if name is None:
             self._create_artifact_name()
         else:
+            self._name = name
             self._date = self._name.split("_")[0]
 
+        assert self._name is not None
         self._folder = ARTIFACTS_FOLDER + self._name
         self._make_subdirs()
 
         if self._model_name is None and os.path.exists(self._models_folder):
-            for file in os.listdir(self._models_folder):
-                if file.startswith("best_model"):
-                    self._model_name = file
+            models = sorted(os.listdir(self._models_folder))
+            for prefix in ["best_model", "final_model", "checkpoint_model"]:
+                found = [m for m in models if m.startswith(prefix)]
+                if found:
+                    self._model_name = found[-1]
                     break
-                if (self._model_name is None or self._model_name.startswith("checkpoint_model")) \
-                and file.startswith("final_model"):
-                    self._model_name = file
-                if self._model_name is None and file.startswith("checkpoint_model"):
-                    self._model_name = file
+
         print(f"Model found: {self._model_name}")
 
     @property
@@ -124,7 +125,7 @@ class Artifacts:
         return self._models_folder + self._model_name
 
     @property
-    def model_name(self) -> str:
+    def model_name(self) -> str | None:
         """Name of the saved model, or None if not yet saved / not found."""
         if self._model_name is None:
             return None
@@ -199,6 +200,7 @@ class Artifacts:
         return models
 
     def generate_report(self):
+        assert self._name is not None
         replace_variables = {
             "[date]": self._date,
             "[run_name]": self._name,
