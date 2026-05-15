@@ -6,6 +6,7 @@
 ##
 
 import os
+import yaml
 import torch
 import random
 import argparse
@@ -60,6 +61,13 @@ def train(artifact: Artifacts, cli_seed=None, cli_random_wind=None):
         if cli_random_wind is not None
         else settings["environment"].get("random_wind", False)
     )
+
+    settings["environment"]["seed"] = seed_value
+    settings["environment"]["random_wind"] = random_wind_value
+    with open(
+        os.path.join(artifact.configs_folder, "settings.yml"), "w", encoding="utf-8"
+    ) as f:
+        yaml.dump(settings, f, default_flow_style=False)
 
     config = load_hyperparameters()
     env_id = settings["environment"]["env_id"]
