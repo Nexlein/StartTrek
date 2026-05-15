@@ -2,7 +2,7 @@
 
 set -e
 
-SEEDS="0 5"
+SEEDS="0 1 2 3 4"
 
 echo "Reproducing StartTrek tests..."
 
@@ -29,7 +29,12 @@ do
 done
 
 echo "[3/3] Starting evaluating..."
-python3 -W ignore eval.py --seed $seed --artifact "$latest_artifact"
+for seed in $SEEDS
+do
+    echo "Evaluating in progress with SEED : $seed"
+    python3 -W ignore eval.py --seed $seed --artifact "$latest_artifact"
+    echo ""
+done
 
 echo ""
 echo "Reproduction completed."
