@@ -13,7 +13,7 @@ buffer_size: 100000
 # Number of random steps before training begins
 learning_starts: 10000
 # Number of transitions sampled for each gradient update
-batch_size: 128
+batch_size: 64
 
 # Train Frequency parameters
 # Update the model every X steps

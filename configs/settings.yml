@@ -10,11 +10,11 @@ environment:
 
 training:
   # Maximum number of episodes for the training loop
-  max_episodes: 1000
+  max_episodes: 1500
 
 evaluation:
   # Number of episodes to run during the evaluation phase
-  n_episodes: 10
+  n_episodes: 100
   # Default wind presence during evaluation (overridden by --wind CLI argument)
   enable_wind: false
   # Default wind power during evaluation if wind is enabled
