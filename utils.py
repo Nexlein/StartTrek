@@ -33,6 +33,7 @@ def make_video_env(
     seed: int | None = None,
     enable_wind: bool = False,
     wind_power: float = 15.0,
+    video_freq: int = 1,
 ):
     path_parts = [base_folder, mode]
     if model_name:
@@ -42,14 +43,16 @@ def make_video_env(
 
     video_path = os.path.join(*path_parts)
 
+    render_mode = "rgb_array" if video_freq > 0 else None
     env = gym.make(
-        env_id, render_mode="rgb_array", enable_wind=enable_wind, wind_power=wind_power
+        env_id, render_mode=render_mode, enable_wind=enable_wind, wind_power=wind_power
     )
 
-    env = gym.wrappers.RecordVideo(
-        env=env,
-        video_folder=video_path,
-        name_prefix=f"{mode}{'_' if mode and model_name else ''}{model_name if model_name else ''}",
-        episode_trigger=lambda x: True,
-    )
+    if video_freq > 0:
+        env = gym.wrappers.RecordVideo(
+            env=env,
+            video_folder=video_path,
+            name_prefix=f"{mode}{'_' if mode and model_name else ''}{model_name if model_name else ''}",
+            episode_trigger=lambda x: x % video_freq == 0,
+        )
     return env
