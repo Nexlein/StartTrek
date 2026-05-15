@@ -63,7 +63,7 @@ class DQNAgent:
             return random.randrange(self.action_dim)  # 100% random action (exploration)
         else:
             with torch.no_grad():
-                state_tensor = torch.FloatTensor(state).unsqueeze(0)
+                state_tensor = torch.FloatTensor(state).unsqueeze(0).to(self.device)
                 q_values = self.policy_net(state_tensor)
                 return q_values.argmax().item()  # Return the index of the action with the highest Q-value (exploitation)
 
@@ -85,11 +85,11 @@ class DQNAgent:
 
         # Convert batch of experiences into tensors for PyTorch
         batch = list(zip(*transitions))
-        states = torch.FloatTensor(np.array(batch[0]))
-        actions = torch.LongTensor(np.array(batch[1])).unsqueeze(1)
-        rewards = torch.FloatTensor(np.array(batch[2])).unsqueeze(1)
-        next_states = torch.FloatTensor(np.array(batch[3]))
-        dones = torch.FloatTensor(np.array(batch[4])).unsqueeze(1)
+        states = torch.FloatTensor(np.array(batch[0])).to(self.device)
+        actions = torch.LongTensor(np.array(batch[1])).unsqueeze(1).to(self.device)
+        rewards = torch.FloatTensor(np.array(batch[2])).unsqueeze(1).to(self.device)
+        next_states = torch.FloatTensor(np.array(batch[3])).to(self.device)
+        dones = torch.FloatTensor(np.array(batch[4])).unsqueeze(1).to(self.device)
 
         # What our brain THOUGHT the action was worth currently
         current_q_values = self.policy_net(states).gather(1, actions)
