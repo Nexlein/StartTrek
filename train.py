@@ -140,7 +140,7 @@ def train(artifact: Artifacts, cli_seed=None, cli_random_wind=None):
                 agent.update_target_network()
 
             if loss_val is not None:
-                    episode_loss.append(loss_val)
+                episode_loss.append(loss_val)
 
             state = next_state
             episode_reward += float(reward)

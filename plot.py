@@ -25,10 +25,10 @@ def plot_all(csv_path: str, output_dir: str):
     episodes = df["Episode"].to_numpy()
 
     plots = {
-        "Returns":        ("Reward",  "Episode Reward",        "reward.png"),
-        "Episode Length": ("Length",  "Steps per Episode",     "length.png"),
-        "Epsilon":        ("Epsilon", "Epsilon",               "epsilon.png"),
-        "Loss":           ("Loss",    "Avg Training Loss",     "loss.png"),
+        "Returns": ("Reward", "Episode Reward", "reward.png"),
+        "Episode Length": ("Length", "Steps per Episode", "length.png"),
+        "Epsilon": ("Epsilon", "Epsilon", "epsilon.png"),
+        "Loss": ("Loss", "Avg Training Loss", "loss.png"),
     }
 
     for title, (col, ylabel, fname) in plots.items():
@@ -39,7 +39,13 @@ def plot_all(csv_path: str, output_dir: str):
         values = df[col].to_numpy(dtype=float)
         fig, ax = plt.subplots(figsize=(10, 4))
         ax.plot(episodes, values, alpha=0.3, color="steelblue", label="raw")
-        ax.plot(episodes, smooth(values), color="steelblue", linewidth=2, label="smoothed (20ep)")
+        ax.plot(
+            episodes,
+            smooth(values),
+            color="steelblue",
+            linewidth=2,
+            label="smoothed (20ep)",
+        )
         ax.set_title(title)
         ax.set_xlabel("Episode")
         ax.set_ylabel(ylabel)
@@ -73,8 +79,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("csv", help="Path to logs.csv")
     parser.add_argument(
-        "--output", default=None,
-        help="Output directory for PNGs (defaults to same dir as csv)"
+        "--output",
+        default=None,
+        help="Output directory for PNGs (defaults to same dir as csv)",
     )
     args = parser.parse_args()
 
