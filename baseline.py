@@ -17,7 +17,7 @@ def random_policy(artifact: Artifacts, seed: int = 0):
     uniformly from the action space, and saves the recordings.
     """
     settings = load_settings()
-    print("--- Running Random Policy Baseline ---")
+    print(f"[BASELINE] Running Random Policy on {settings['environment']['env_id']}")
 
     env = make_video_env(
         env_id=settings["environment"]["env_id"],
@@ -26,13 +26,22 @@ def random_policy(artifact: Artifacts, seed: int = 0):
         model_name="random",
     )
 
+    log_file = f"{artifact.logs_folder}baseline_random.csv"
+    with open(log_file, "w") as f:
+        f.write("Episode,Reward,Length,Termination\n")
+
     for ep in range(3):
         env.reset(seed=1 + ep)
         done = False
         termination_reason = "ongoing"
+        episode_reward = 0.0
+        episode_length = 0
+
         while not done:
             action = env.action_space.sample()
             _, reward, terminated, truncated, _ = env.step(action)
+            episode_reward += float(reward)
+            episode_length += 1
             done = terminated or truncated
 
             if done:
@@ -43,7 +52,15 @@ def random_policy(artifact: Artifacts, seed: int = 0):
                         termination_reason = "sleep"
                 elif truncated:
                     termination_reason = "out-of-view"
-        print(f"Random Policy Ep {ep + 1} terminated by: {termination_reason}")
+
+        with open(log_file, "a") as f:
+            f.write(
+                f"{ep},{episode_reward:.2f},{episode_length},{termination_reason}\n"
+            )
+
+        print(
+            f"[BASELINE - Random] Episode {ep + 1}/3 | Reward: {episode_reward:7.2f} | Steps: {episode_length:4d} | Cause: {termination_reason}"
+        )
     env.close()
 
 
@@ -56,7 +73,7 @@ def heuristic_policy(artifact: Artifacts):
     Executes 3 episodes and saves the recordings.
     """
     settings = load_settings()
-    print("--- Running Heuristic Policy Baseline ---")
+    print(f"[BASELINE] Running Heuristic Policy on {settings['environment']['env_id']}")
 
     env = make_video_env(
         env_id=settings["environment"]["env_id"],
@@ -65,10 +82,17 @@ def heuristic_policy(artifact: Artifacts):
         model_name="heuristic",
     )
 
+    log_file = f"{artifact.logs_folder}baseline_heuristic.csv"
+    with open(log_file, "w") as f:
+        f.write("Episode,Reward,Length,Termination\n")
+
     for ep in range(3):
         obs, _ = env.reset(seed=1 + ep)
         done = False
         termination_reason = "ongoing"
+        episode_reward = 0.0
+        episode_length = 0
+
         while not done:
             # State : [x, y, v_x, v_y, angle, v_angle, left_contact, right_contact]
             angle = obs[4]
@@ -85,6 +109,8 @@ def heuristic_policy(artifact: Artifacts):
                 action = 0  # Do nothing
 
             obs, reward, terminated, truncated, _ = env.step(action)
+            episode_reward += float(reward)
+            episode_length += 1
             done = terminated or truncated
 
             if done:
@@ -95,7 +121,15 @@ def heuristic_policy(artifact: Artifacts):
                         termination_reason = "sleep"
                 elif truncated:
                     termination_reason = "out-of-view"
-        print(f"Heuristic Policy Ep {ep + 1} terminated by: {termination_reason}")
+
+        with open(log_file, "a") as f:
+            f.write(
+                f"{ep},{episode_reward:.2f},{episode_length},{termination_reason}\n"
+            )
+
+        print(
+            f"[BASELINE - Heuristic] Episode {ep + 1}/3 | Reward: {episode_reward:7.2f} | Steps: {episode_length:4d} | Cause: {termination_reason}"
+        )
     env.close()
 
 

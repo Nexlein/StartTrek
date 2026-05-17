@@ -1,18 +1,26 @@
-# configs/settings.yml
+# configs/settings.yml.template
 
 environment:
+  # The Gymnasium/Environment ID to use
   env_id: "LunarLander-v3"
-  random_wind: false
+  # Randomize wind presence and power across episodes for robust training
+  random_wind: true
+  # Global seed for environment and random number generators
   seed: 1
 
 training:
-  max_episodes: 1000
+  # Maximum number of episodes for the training loop
+  max_episodes: 1500
 
 evaluation:
-  n_episodes: 10
+  # Number of episodes to run during the evaluation phase
+  n_episodes: 100
+  # Default wind presence during evaluation (overridden by --wind CLI argument)
   enable_wind: false
+  # Default wind power during evaluation if wind is enabled
   wind_power: 15.0
 
 paths:
+  # Directories for outputs (must include trailing slash)
   video_folder: "results/videos/"
   model_folder: "results/models/"
