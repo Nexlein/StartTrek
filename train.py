@@ -15,6 +15,7 @@ from artifacts import Artifacts
 from model.agent import DQNAgent
 from gymnasium.envs.box2d.lunar_lander import LunarLander
 from utils import load_hyperparameters, load_settings, make_video_env
+from plot import plot_all
 
 
 def seed_everything(seed: int):
@@ -175,6 +176,10 @@ def train(artifact: Artifacts, cli_seed=None, cli_random_wind=None):
             print(f"[TRAIN] New best model saved! Reward: {best_reward:.2f}")
 
     env.close()
+
+    print("[TRAIN] Generating charts...")
+    log_file = os.path.join(artifact.logs_folder, "logs.csv")
+    plot_all(log_file, artifact.charts_folder)
 
 
 if __name__ == "__main__":
