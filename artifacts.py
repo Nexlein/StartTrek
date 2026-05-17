@@ -24,6 +24,7 @@ class Artifacts:
     _models_folder: str
     _videos_folder: str
     _logs_folder: str
+    _charts_folder: str
 
     _model_name: str | None
     _has_name_given: bool
@@ -144,6 +145,11 @@ class Artifacts:
         """Absolute path to the configs sub-folder of this artifact."""
         return self._configs_folder
 
+    @property
+    def charts_folder(self) -> str:
+        """Absolute path to the charts sub-folder of this artifact."""
+        return self._charts_folder
+
     def _create_artifact_name(self):
         gmt = time.gmtime()
         self._date = "-".join([str(gmt.tm_year), str(gmt.tm_mon), str(gmt.tm_mday)])
@@ -157,11 +163,13 @@ class Artifacts:
         self._models_folder = self._folder + "models/"
         self._videos_folder = self._folder + "videos/"
         self._logs_folder = self._folder + "logs/"
+        self._charts_folder = self._folder + "charts/"
 
         os.makedirs(self._configs_folder, exist_ok=True)
         os.makedirs(self._models_folder, exist_ok=True)
         os.makedirs(self._videos_folder, exist_ok=True)
         os.makedirs(self._logs_folder, exist_ok=True)
+        os.makedirs(self._charts_folder, exist_ok=True)
 
     def _init_log(self, log_header: str):
         """Write the CSV header if the log file does not exist yet."""
