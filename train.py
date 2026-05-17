@@ -100,6 +100,9 @@ def train(artifact: Artifacts, cli_seed=None, cli_random_wind=None):
     best_reward = -float("inf")
 
     for episode in range(max_episodes):
+        episode_loss = []
+        loss_val = None
+
         if random_wind_value:
             # Randomly toggle wind for this episode
             is_windy = random.choice([True, False])
@@ -133,8 +136,11 @@ def train(artifact: Artifacts, cli_seed=None, cli_random_wind=None):
             agent.memory.push(state, action, reward, next_state, terminated)
 
             if len(agent.memory) > config["batch_size"]:
-                agent.learn(config["batch_size"])
+                loss_val = agent.learn(config["batch_size"])
                 agent.update_target_network()
+
+            if loss_val is not None:
+                    episode_loss.append(loss_val)
 
             state = next_state
             episode_reward += float(reward)
@@ -147,8 +153,9 @@ def train(artifact: Artifacts, cli_seed=None, cli_random_wind=None):
             f"[TRAIN] Episode {episode + 1:4d}/{max_episodes} | Score: {episode_reward:7.2f} | Steps: {step:4d} | Epsilon: {agent.epsilon:.3f} | Cause: {termination_reason}"
         )
 
+        avg_loss = float(np.mean(episode_loss)) if episode_loss else float("nan")
         artifact.log_step(
-            [episode, episode_reward, step, agent.epsilon, termination_reason]
+            [episode, episode_reward, step, agent.epsilon, termination_reason, avg_loss]
         )
 
         if episode > 0:

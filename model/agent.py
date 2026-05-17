@@ -112,6 +112,7 @@ class DQNAgent:
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
+        return loss.item()
 
     def update_target_network(self, tau=0.005):
         """
