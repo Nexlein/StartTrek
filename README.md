@@ -76,11 +76,12 @@ Run the full experiment suite on the five official seeds:
 | Path | Description |
 | --- | --- |
 | `baseline.py` | Reference random and heuristic policies. |
-| `train.py` | Main training entry point for the DQN agent. |
+| `train.py` | Main training entry point for the DQN agent. Generates charts automatically at the end. |
 | `eval.py` | Evaluation script for trained agents. |
+| `plot.py` | Generates metrics and 95% CI charts from training logs. |
 | `model/` | PyTorch implementation of the agent, memory, and neural network. |
 | `configs/` | Hyperparameter configuration files in YAML format. |
-| `results/` | Saved models, evaluation logs, and generated videos. |
+| `artifacts/` | Saved models, configurations, evaluation logs, generated videos, and charts. |
 | `scripts/reproduce.sh` | One-command script to reproduce the complete workflow. |
 
 ## Methodology

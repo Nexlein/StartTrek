@@ -1,0 +1,13 @@
+environment:
+  env_id: LunarLander-v3
+  random_wind: true
+  seed: 4
+evaluation:
+  enable_wind: false
+  n_episodes: 10
+  wind_power: 15.0
+paths:
+  model_folder: results/models/
+  video_folder: results/videos/
+training:
+  max_episodes: 100
