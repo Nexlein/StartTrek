@@ -7,7 +7,9 @@
 
 import os
 import argparse
+import numpy as np
 import pandas as pd
+import scipy.stats as st
 import matplotlib.pyplot as plt
 
 
@@ -21,8 +23,6 @@ def plot_all(csv_path: str, output_dir: str):
     os.makedirs(output_dir, exist_ok=True)
     df = pd.read_csv(csv_path)
 
-    episodes = df["Episode"].to_numpy()
-
     plots = {
         "Returns": ("Reward", "Episode Reward", "reward.png"),
         "Episode Length": ("Length", "Steps per Episode", "length.png"),
@@ -35,16 +35,52 @@ def plot_all(csv_path: str, output_dir: str):
             print(f"[PLOT] Column '{col}' not found, skipping.")
             continue
 
-        values = df[col].to_numpy(dtype=float)
+        # Drop NaN values for calculation (e.g., if loss is not present in initial episodes)
+        col_data = df.dropna(subset=[col])
+        if col_data.empty:
+            continue
+
+        # Group by Episode to aggregate multiple seeds present in the same CSV
+        col_grouped = col_data.groupby("Episode")[col]
+        episodes = col_grouped.mean().index.to_numpy()
+        mean_vals = col_grouped.mean().to_numpy()
+        std_vals = col_grouped.std().to_numpy()
+        counts = col_grouped.count().to_numpy()
+
+        # Calculate 95% Confidence Interval
+        ci = np.zeros_like(mean_vals)
+        for i in range(len(counts)):
+            if counts[i] > 1:
+                ci[i] = (
+                    std_vals[i]
+                    * st.t.ppf((1 + 0.95) / 2.0, counts[i] - 1)
+                    / np.sqrt(counts[i])
+                )
+
         fig, ax = plt.subplots(figsize=(10, 4))
-        ax.plot(episodes, values, alpha=0.3, color="steelblue", label="raw")
-        ax.plot(
-            episodes,
-            smooth(values),
-            color="steelblue",
-            linewidth=2,
-            label="smoothed (20ep)",
-        )
+
+        # If there's only 1 seed, also show the smoothed raw data to maintain original behavior
+        if counts.max() == 1:
+            ax.plot(episodes, mean_vals, alpha=0.3, color="steelblue", label="raw")
+            ax.plot(
+                episodes,
+                smooth(mean_vals),
+                color="steelblue",
+                linewidth=2,
+                label="smoothed (20ep)",
+            )
+        else:
+            # For multiple seeds, plot the mean and 95% CI
+            ax.plot(episodes, mean_vals, color="steelblue", linewidth=2, label="Mean")
+            ax.fill_between(
+                episodes,
+                mean_vals - ci,
+                mean_vals + ci,
+                color="steelblue",
+                alpha=0.3,
+                label="95% CI",
+            )
+
         ax.set_title(title)
         ax.set_xlabel("Episode")
         ax.set_ylabel(ylabel)
