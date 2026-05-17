@@ -396,7 +396,7 @@ To maintain production-grade software standards, we decoupled the training pipel
 ---
 
 ![Artifacts pipeline diagram](assets/starttrek-artifacts.drawio.png)  
-Update diagram [here](https://app.diagrams.net/#G1e-sGQiNp-37pfsUEOdmU1QkKIDWGtER9#%7B%22pageId%22%3A%22lhx5Pz8m_jNaTrubrk9J%22%7D)
+Edit the artifacts pipeline diagram on [diagram.net](https://app.diagrams.net/#G1e-sGQiNp-37pfsUEOdmU1QkKIDWGtER9#%7B%22pageId%22%3A%22lhx5Pz8m_jNaTrubrk9J%22%7D).
 
 ---
 
