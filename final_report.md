@@ -375,11 +375,15 @@ The entire execution lifecycle is fully automated via a single shell script: `re
 
 ### 7.3 Confidence Interval
 
-Evaluating an agent on a single training run is statistically invalid due to environmental stochasticity. To combat this, we aggregate the performance across all 5 seeds, reporting the sample mean alongside a **95% Confidence Interval (95% CI)** calculated via Student's t-distribution:
+Evaluating an agent on a single training run is statistically invalid due to environmental stochasticity. To combat this, we aggregate performance metrics across all 5 canonical seeds.
+
+To prevent sequential plotting distortions(where standard charting tools incorrectly connect successive seed timelines linearly) our automated evaluation pipeline utilizes a `pandas.groupby("Episode")` aggregation strategy. This maps all parallel runs onto a unified, synchronized timeline.
+
+We report the sample mean alongside a **95% Confidence Interval (95% CI)** calculated via Student's t-distribution:
 
 $$\text{CI} = \bar{X} \pm t_{\alpha/2, n-1} \left( \frac{s}{\sqrt{n}} \right)$$
 
-This metric filters out lucky anomalies and provides mathematical proof of the algorithm's long-term stability.
+In our automated graphics suite, this statistical distribution is rendered as a clean, continuous mean trajectory bounded by a translucent shaded area representing the 95% CI. This eliminates raw visual noise and provides mathematical proof of the algorithm's long-term stability.
 
 ---
 
@@ -387,7 +391,14 @@ This metric filters out lucky anomalies and provides mathematical proof of the a
 
 To maintain production-grade software standards, we decoupled the training pipeline from monitoring and built a dedicated verification architecture:
 
+- **Deep Telemetry Logging:** We refactored the optimization step within `agent.py` to extract individual optimization costs via `loss.item()`. The training loop averages these values per episode and appends them to a dedicated `Loss` column in our centralized telemetric ledger (`logs.csv`).
+
 - **Centralized Artifacts (`artifacts.py`):** Automatically generates timestamped directories for every run, cleanly separating evaluation metrics (`logs.csv`), serialized PyYAML configurations, `.pth` model checkpoints, and rendered videos.
+
+- **Dual-Mode Visualization Pipeline (`plot.py`):** Integrated a one-click automated chart generator triggered immediately at the end of the execution cycle. It operates in two dynamic display modes:
+
+  - *Single-Seed Mode:* Visualizes raw episode performance overlaid with a 20-episode moving average trendline to smooth out high-frequency reward fluctuations.
+  - *Multi-Seed Mode:* Automatically groups multi-run matrices to plot global statistical averages alongside their respective 95% CI shaded bands and categorical termination cause distributions (Crash vs. Out-of-view vs. Sleep).
 
 - **Automated Smoke Testing:** A `pytest` suite executes a fast, 3-episode cycle to validate the replay buffer integrity, tensor device configurations, and logging paths in under seven seconds, catching silent bugs before heavy training blocks begin.
 
