@@ -13,6 +13,7 @@ import argparse
 from artifacts import Artifacts
 from model.agent import DQNAgent
 from utils import load_settings, make_video_env
+from plot import plot_eval, plot_eval_comparison
 
 
 def eval_model(artifact: Artifacts, cli_seed=None, cli_wind=None):
@@ -66,12 +67,17 @@ def eval_model(artifact: Artifacts, cli_seed=None, cli_wind=None):
         elif filtered_models:
             model_files = [filtered_models[-1]]
 
-    # Reflect evaluation overrides in a specific eval settings file within the artifact
+    wind_tag = f"wind{int(wind_power)}" if enable_wind else "nowind"
+
+    # Reflect evaluation overrides in a condition-specific eval settings file
     settings["environment"]["seed"] = seed_value
+    settings["environment"].pop(
+        "random_wind", None
+    )  # training-only param, irrelevant for eval
     settings["evaluation"]["enable_wind"] = enable_wind
     settings["evaluation"]["wind_power"] = wind_power
     with open(
-        os.path.join(artifact.configs_folder, "eval_settings.yml"),
+        os.path.join(artifact.configs_folder, f"eval_settings_{wind_tag}.yml"),
         "w",
         encoding="utf-8",
     ) as f:
@@ -81,21 +87,27 @@ def eval_model(artifact: Artifacts, cli_seed=None, cli_wind=None):
         f"[EVAL] Starting evaluation on {env_id} | Seed: {seed_value} | Wind: {enable_wind} (Power: {wind_power})"
     )
     print(f"[EVAL] Videos will be saved to: {artifact.videos_folder}")
+
     env = None
     for model_file in model_files:
         model_name = model_file.replace(".pth", "")
         model_path = os.path.join(artifact.models_folder, model_file)
 
+        eval_model_name = f"{model_name}_{wind_tag}"
+
         env = make_video_env(
             env_id=env_id,
             base_folder=artifact.videos_folder,
             mode="eval",
-            model_name=model_name,
+            model_name=eval_model_name,
             enable_wind=enable_wind,
             wind_power=wind_power,
         )
 
         print(f"[EVAL] Targeting Model: {model_name}")
+        print(
+            f"[EVAL] Condition: {'wind (power=' + str(wind_power) + ')' if enable_wind else 'no wind'}"
+        )
         print(f"[EVAL] Loading weights from: {model_path}")
 
         agent = DQNAgent(state_dim=8, action_dim=4)
@@ -106,7 +118,7 @@ def eval_model(artifact: Artifacts, cli_seed=None, cli_wind=None):
         agent.epsilon = 0.0
 
         eval_log_path = os.path.join(
-            artifact.logs_folder, f"eval_scores_seed_{seed_value}.csv"
+            artifact.logs_folder, f"eval_scores_seed_{seed_value}_{wind_tag}.csv"
         )
         with open(eval_log_path, "w") as f:
             f.write("Episode,Reward\n")
@@ -133,6 +145,23 @@ def eval_model(artifact: Artifacts, cli_seed=None, cli_wind=None):
 
         if env is not None:
             env.close()
+
+        condition_label = f"Wind {int(wind_power)}" if enable_wind else "No Wind"
+        print("[EVAL] Generating charts...")
+        plot_eval(eval_log_path, artifact.charts_folder, label=condition_label)
+
+        nowind_csv = os.path.join(
+            artifact.logs_folder, f"eval_scores_seed_{seed_value}_nowind.csv"
+        )
+        wind_csv = os.path.join(
+            artifact.logs_folder,
+            f"eval_scores_seed_{seed_value}_wind{int(wind_power)}.csv",
+        )
+        if os.path.exists(nowind_csv) and os.path.exists(wind_csv):
+            plot_eval_comparison(
+                {"No Wind": nowind_csv, f"Wind {int(wind_power)}": wind_csv},
+                artifact.charts_folder,
+            )
 
     return 0
 
