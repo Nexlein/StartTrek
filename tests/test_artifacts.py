@@ -5,8 +5,9 @@
 ## test_artifacts.oy
 ##
 
-import os
 import csv
+import os
+
 import artifacts
 from artifacts import Artifacts
 from model.agent import DQNAgent

@@ -5,15 +5,17 @@
 ## eval
 ##
 
+import argparse
 import os
 import sys
-import yaml
+
 import torch
-import argparse
+import yaml
+
 from artifacts import Artifacts
 from model.agent import DQNAgent
-from utils import load_settings, make_video_env
 from plot import plot_eval, plot_eval_comparison
+from utils import load_settings, make_video_env
 
 
 def eval_model(artifact: Artifacts, cli_seed=None, cli_wind=None):

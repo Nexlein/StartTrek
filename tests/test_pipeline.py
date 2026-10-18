@@ -6,13 +6,15 @@
 ##
 
 import os
-import yaml
+
 import torch
+import yaml
+
 import artifacts
-from train import train
-from eval import eval_model
 from artifacts import Artifacts
+from eval import eval_model
 from model.agent import DQNAgent
+from train import train
 
 
 def test_train_short_run(tmp_path):
