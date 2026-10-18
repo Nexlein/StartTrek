@@ -356,11 +356,13 @@ Best:
 
 | Run ID | Learning Rate ($\alpha$) | Batch Size | Max Episodes | Domain Randomization | Mean Eval Score (100 Ep) $\pm$ 95% CI | Status / Engineering Outcome |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **#1 (Optimal)** | **$0.0001$** | **$64$** | **$1500$** | **Enabled (Variable Wind)** | **$+242.5 \pm 12.4$** | **PASSED** (Target Criteria Met) |
+| **#1 (Best)** | **$0.0001$** | **$64$** | **$1500$** | **Enabled (Variable Wind)** | **$+191.1 \pm 40.9$** | **Below target** (mean < 200; seeds 0 and 1 above 200, seeds 2–4 below) |
 | #2 | $0.001$ | $64$ | $1500$ | Enabled (Variable Wind) | $-45.2 \pm 38.1$ | **FAILED** (High gradient variance; diverged) |
 | #3 | $0.0001$ | $128$ | $1500$ | Enabled (Variable Wind) | $+145.8 \pm 22.3$ | **FAILED** (Stuck in local optima due to smooth gradients) |
 | #4 | $0.0001$ | $64$ | $1000$ | Enabled (Variable Wind) | $+188.2 \pm 15.6$ | **FAILED** (Incomplete asymptotic convergence) |
 | #5 | $0.0001$ | $64$ | $1500$ | Disabled (Static Wind) | $-112.4 \pm 45.8$ | **FAILED** (Severe overfitting to wind profile) |
+
+Run #1 is the 5-seed run saved in `artifacts/2026-5-15_17:40:53/` (100 evaluation episodes per seed, `logs/eval_scores_seed_*.csv`; recompute with `python scripts/calculate_ci.py --artifact artifacts/2026-5-15_17:40:53`). Runs #2 to #5 have no saved artifact in this repository, so their scores cannot be checked here.
 
 ---
 
@@ -383,7 +385,7 @@ We report the sample mean alongside a **95% Confidence Interval (95% CI)** calcu
 
 $$\text{CI} = \bar{X} \pm t_{\alpha/2, n-1} \left( \frac{s}{\sqrt{n}} \right)$$
 
-In our automated graphics suite, this statistical distribution is rendered as a clean, continuous mean trajectory bounded by a translucent shaded area representing the 95% CI. This eliminates raw visual noise and provides mathematical proof of the algorithm's long-term stability.
+In our automated graphics suite, this statistical distribution is rendered as a clean, continuous mean trajectory bounded by a translucent shaded area representing the 95% CI. This removes raw visual noise and shows how consistent training is from one seed to another.
 
 ---
 
@@ -402,7 +404,7 @@ To maintain production-grade software standards, we decoupled the training pipel
 
 - **Automated Smoke Testing:** A `pytest` suite executes a fast, 3-episode cycle to validate the replay buffer integrity, tensor device configurations, and logging paths in under seven seconds, catching silent bugs before heavy training blocks begin.
 
-- **Code Coverage:** Integrated `pytest-cov` to map execution pathways, maintaining a robust **84%** test coverage baseline across the entire codebase.
+- **Code Coverage:** Integrated `pytest-cov` to map execution pathways. `pytest --cov=.` reports **77%** coverage over the repository (72% without counting the test files themselves); `baseline.py` is not covered by tests.
 
 ---
 
@@ -415,11 +417,11 @@ Edit the artifacts pipeline diagram on [diagram.net](https://app.diagrams.net/#G
 
 ### Acceptance Criteria
 
-To validate the mission's success, the deployment pipeline evaluated the trained agent against a strict set of quantitative benchmarks. The framework officially achieved all targets:
+To validate the mission's success, the deployment pipeline evaluated the trained agent against a strict set of quantitative benchmarks:
 
-- **Performance Threshold:** Attained a mean score of $\ge 200$ over 100 consecutive evaluation episodes, meeting the core success criteria.
+- **Performance Threshold:** Not met. Over 5 seeds × 100 evaluation episodes (`artifacts/2026-5-15_17:40:53/`), the agent averages **$191.1 \pm 40.9$ (95% CI)**, just below the target of 200. Seed means: 203.1, 242.7, 179.2, 170.6 and 159.9. Seeds 0 and 1 pass the threshold on their own, and 61% of the 500 evaluation episodes score 200 or more.
 
-- **Statistical Rigor:** Verified stability across 5 distinct canonical seeds, reporting a tight 95% Confidence Interval to eliminate fluke runs.
+- **Statistical Rigor:** Evaluated across 5 distinct canonical seeds and reported with a 95% Confidence Interval. The wide interval shows that results still depend strongly on the seed.
 
 - **Telemetry Logging:** Successfully isolated and tracked exit states, distinguishing between environmental failures (`crash`), safe landings (`sleep`), and physical timeouts (`out-of-view`).
 
@@ -429,7 +431,9 @@ To validate the mission's success, the deployment pipeline evaluated the trained
 
 ## 10. Limitations
 
-While the agent successfully solves the environment, the current architecture faces a few engineering trade-offs:
+The agent comes close to solving the environment (191.1 ± 40.9 against a target of 200) but does not reach the target on average, and the current architecture faces a few engineering trade-offs:
+
+- **Seed Variance:** Two of the five seeds pass 200 while the other three stay between 160 and 180, so results still depend heavily on initialization.
 
 - **Sample Inefficiency:** DQN requires hundreds of thousands of environment interactions to converge, making it costly for more complex physical systems.
 
@@ -453,9 +457,9 @@ To scale the autonomous navigation system for more complex extraplanetary deploy
 
 ## 12. Conclusion
 
-This project successfully produced a fully autonomous lunar lander agent.
+This project produced a fully autonomous lunar lander agent that averages 191.1 ± 40.9 over 5 seeds, just below the 200 target, with two seeds above it.
 
-Beyond solving the task, we built:
+Alongside the agent, we built:
 
 - a custom RL implementation,
 - a reproducible experimental framework,
