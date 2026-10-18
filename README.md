@@ -71,6 +71,10 @@ Run the full experiment suite on the five official seeds:
 ./scripts/reproduce.sh
 ```
 
+## Results
+
+Across the five official seeds (100 evaluation episodes each, `artifacts/2026-5-15_17:40:53/`), the agent averages **191.1 ± 40.9 (95% CI)**, just below the 200 points that count as solving LunarLander. Seeds 0 and 1 score above 200 on their own. Details are in [final_report.md](final_report.md).
+
 ## Project Structure
 
 | Path | Description |
