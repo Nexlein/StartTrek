@@ -5,17 +5,19 @@
 ## train
 ##
 
-import os
-import yaml
-import torch
-import random
 import argparse
+import os
+import random
+
 import numpy as np
+import torch
+import yaml
+from gymnasium.envs.box2d.lunar_lander import LunarLander
+
 from artifacts import Artifacts
 from model.agent import DQNAgent
-from gymnasium.envs.box2d.lunar_lander import LunarLander
-from utils import load_hyperparameters, load_settings, make_video_env
 from plot import plot_all
+from utils import load_hyperparameters, load_settings, make_video_env
 
 
 def seed_everything(seed: int):

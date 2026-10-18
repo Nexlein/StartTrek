@@ -7,10 +7,10 @@
 
 import os
 import re
-import time
-import torch
 import shutil
-from typing import List
+import time
+
+import torch
 
 ARTIFACTS_FOLDER = "artifacts/"
 
@@ -34,7 +34,7 @@ class Artifacts:
 
     def __init__(
         self,
-        configs: List[str] | None = None,
+        configs: list[str] | None = None,
         load_path: str | None = None,
         log_header: str = "Episode,Reward,Length,Epsilon,Termination,Loss",
     ):
@@ -60,7 +60,7 @@ class Artifacts:
         else:
             self._create(configs or [], log_header)
 
-    def _create(self, configs: List[str], log_header: str):
+    def _create(self, configs: list[str], log_header: str):
         """Create a brand-new artifact with timestamped folder."""
         self._create_artifact_name()
         assert self._name is not None
@@ -154,7 +154,7 @@ class Artifacts:
         gmt = time.gmtime()
         self._date = "-".join([str(gmt.tm_year), str(gmt.tm_mon), str(gmt.tm_mday)])
         current_time = ":".join([str(gmt.tm_hour), str(gmt.tm_min), str(gmt.tm_sec)])
-        self._name = "_".join([self._date, current_time]) + "/"
+        self._name = f"{self._date}_{current_time}/"
         return self._name
 
     def _make_subdirs(self):
@@ -178,7 +178,7 @@ class Artifacts:
             with open(log_path, "w") as f:
                 f.write(f"{log_header}\n")
 
-    def log_step(self, values: List):
+    def log_step(self, values: list):
         line = ",".join(str(v) for v in values)
         with open(self._logs_folder + self._logs_name, "a") as f:
             f.write(line + "\n")
@@ -196,12 +196,12 @@ class Artifacts:
         torch.save(model, self._models_folder + fileName)
         self._model_name = fileName
 
-    def get_models(self) -> List[str]:
+    def get_models(self) -> list[str]:
         if not os.path.exists(self._models_folder):
             return []
         models = []
         for f in os.listdir(self._models_folder):
-            if f.startswith("best_model") or f.startswith("final_model"):
+            if f.startswith(("best_model", "final_model")):
                 models.append(f)
         return models
 

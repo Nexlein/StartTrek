@@ -5,11 +5,12 @@
 ## agent
 ##
 
-import torch
-import torch.nn as nn
-import torch.optim as optim
 import random
+
 import numpy as np
+import torch
+from torch import nn, optim
+
 from model.memory import ReplayMemory
 from model.model import DQN
 

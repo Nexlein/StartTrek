@@ -5,12 +5,13 @@
 ## plot
 ##
 
-import os
 import argparse
+import os
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scipy.stats as st
-import matplotlib.pyplot as plt
 
 
 def smooth(values, window=20):
@@ -57,7 +58,7 @@ def plot_all(csv_path: str, output_dir: str):
                     / np.sqrt(counts[i])
                 )
 
-        fig, ax = plt.subplots(figsize=(10, 4))
+        _fig, ax = plt.subplots(figsize=(10, 4))
 
         # If there's only 1 seed, also show the smoothed raw data to maintain original behavior
         if counts.max() == 1:
@@ -98,7 +99,7 @@ def plot_all(csv_path: str, output_dir: str):
         if counts.empty:
             print("[PLOT] No termination data, skipping.")
         else:
-            fig, ax = plt.subplots(figsize=(6, 4))
+            _fig, ax = plt.subplots(figsize=(6, 4))
             counts.plot(kind="bar", ax=ax, color="steelblue", edgecolor="black")
             ax.set_title("Termination Causes")
             ax.set_xlabel("Cause")
@@ -127,7 +128,7 @@ def plot_eval(csv_path: str, output_dir: str, label: str = ""):
     n = len(rewards)
     ci = st.t.ppf(0.975, n - 1) * std / np.sqrt(n) if n > 1 else 0
 
-    fig, ax = plt.subplots(figsize=(8, 4))
+    _fig, ax = plt.subplots(figsize=(8, 4))
     ax.hist(rewards, bins=20, color="steelblue", edgecolor="black", alpha=0.8)
     ax.axvline(mean, color="red", linewidth=2, label=f"Mean = {mean:.1f} ± {ci:.1f}")
     ax.axvline(mean - ci, color="red", linewidth=1, linestyle=":", alpha=0.6)
@@ -172,7 +173,7 @@ def plot_eval_comparison(csv_paths: dict, output_dir: str):
         cis.append(ci)
 
     x = np.arange(len(labels))
-    fig, ax = plt.subplots(figsize=(6, 4))
+    _fig, ax = plt.subplots(figsize=(6, 4))
     bars = ax.bar(
         x,
         means,

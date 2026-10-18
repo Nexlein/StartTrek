@@ -6,20 +6,21 @@
 ##
 
 import os
-import yaml
+from typing import Any
+
 import gymnasium as gym
-from typing import Dict, Any
+import yaml
 
 
 def load_hyperparameters(
     config_path: str = "configs/hyperparameters.yml",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Load hyperparameters from a YAML configuration file."""
     with open(config_path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
-def load_settings(config_path: str = "configs/settings.yml") -> Dict[str, Any]:
+def load_settings(config_path: str = "configs/settings.yml") -> dict[str, Any]:
     """Load general project settings from a YAML configuration file."""
     with open(config_path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
